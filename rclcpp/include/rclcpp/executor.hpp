@@ -403,7 +403,7 @@ public:
   void
   set_memory_strategy(memory_strategy::MemoryStrategy::SharedPtr memory_strategy);
 
-  #ifdef PICAS
+#ifdef PICAS
   bool callback_priority_enabled = false;
   int executor_priority = 0;
   int executor_cpu = 0;
