@@ -100,7 +100,7 @@ SingleThreadedExecutor::spin_cpu(int cpu)
   if (spinning.exchange(true)) {
     throw std::runtime_error("spin() called while already spinning");
   }
-  RCLCPP_SCOPE_EXIT(this->spinning.store(false); );
+  RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
   while (rclcpp::ok(this->context_) && spinning.load()) {
     rclcpp::AnyExecutable any_executable;
     if (get_next_executable(any_executable)) {
@@ -136,7 +136,7 @@ SingleThreadedExecutor::spin_rt()
   if (spinning.exchange(true)) {
     throw std::runtime_error("spin() called while already spinning");
   }
-  RCLCPP_SCOPE_EXIT(this->spinning.store(false); );
+  RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
   while (rclcpp::ok(this->context_) && spinning.load()) {
     //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Start spin loop. Initialize any_executable.");    
     rclcpp::AnyExecutable any_executable;
@@ -184,7 +184,7 @@ SingleThreadedExecutor::spin_deadline(int rt_priority, int T, int budget)
   if (spinning.exchange(true)) {
     throw std::runtime_error("spin() called while already spinning");
   }
-  RCLCPP_SCOPE_EXIT(this->spinning.store(false); );
+  RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
   while (rclcpp::ok(this->context_) && spinning.load()) {
     rclcpp::AnyExecutable any_executable;
     if (get_next_executable(any_executable)) {
