@@ -986,7 +986,7 @@ Executor::get_next_executable(AnyExecutable & any_executable, std::chrono::nanos
   #endif 
   success = get_next_ready_executable(any_executable);
 
-#ifdef PICAS_DEBUG
+  #ifdef PICAS_DEBUG
     if (success) print_list_ready_executable(any_executable);
   #endif 
   }

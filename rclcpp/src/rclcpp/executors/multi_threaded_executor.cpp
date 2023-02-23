@@ -127,8 +127,8 @@ MultiThreadedExecutor::run(size_t thread_id)
 void
 MultiThreadedExecutor::run(size_t this_thread_number)
 {
-#endif
   (void)this_thread_number;
+#endif
   while (rclcpp::ok(this->context_) && spinning.load()) {
     rclcpp::AnyExecutable any_exec;
     {

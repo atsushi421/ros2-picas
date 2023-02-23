@@ -305,9 +305,8 @@ public:
         any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
         subscription_handles_.erase(it);
         return;
-      }
 #endif
-
+      }
       // Else, the subscription is no longer valid, remove it and continue
       it = subscription_handles_.erase(it);
     }
