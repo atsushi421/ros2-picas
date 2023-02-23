@@ -124,6 +124,10 @@ class ClientBase
 public:
   RCLCPP_SMART_PTR_DEFINITIONS_NOT_COPYABLE(ClientBase)
 
+#ifdef PICAS
+  int callback_priority = 0;
+#endif
+
   RCLCPP_PUBLIC
   ClientBase(
     rclcpp::node_interfaces::NodeBaseInterface * node_base,

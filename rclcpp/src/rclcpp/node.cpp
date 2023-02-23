@@ -63,13 +63,14 @@ extend_sub_namespace(const std::string & existing_sub_namespace, const std::stri
             extension.c_str(),
             "sub-nodes should not extend nodes by an empty sub-namespace",
             0);
-  } else if (extension.front() == '/') {
-    // check if the new sub-namespace extension is absolute
-    throw rclcpp::exceptions::NameValidationError(
-            "sub_namespace",
-            extension.c_str(),
-            "a sub-namespace should not have a leading /",
-            0);
+  // MEMO: Not used in PiCAS
+  // } else if (extension.front() == '/') {
+  //   // check if the new sub-namespace extension is absolute
+  //   throw rclcpp::exceptions::NameValidationError(
+  //           "sub_namespace",
+  //           extension.c_str(),
+  //           "a sub-namespace should not have a leading /",
+  //           0);
   }
 
   std::string new_sub_namespace;
@@ -95,11 +96,7 @@ create_effective_namespace(const std::string & node_namespace, const std::string
   // and do not need trimming of `/` and other things, as they were validated
   // in other functions already.
 
-  // A node may not have a sub_namespace if it is no sub_node. In this case,
-  // just return the original namespace
-  if (sub_namespace.empty()) {
-    return node_namespace;
-  } else if (node_namespace.back() == '/') {
+  if (node_namespace.back() == '/') {
     // this is the special case where node_namespace is just `/`
     return node_namespace + sub_namespace;
   } else {

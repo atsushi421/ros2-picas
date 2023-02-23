@@ -147,6 +147,10 @@ public:
   get_group_by_waitable(
     const rclcpp::Waitable::SharedPtr & waitable,
     const WeakCallbackGroupsToNodesMap & weak_groups_to_nodes);
+
+#ifdef PICAS
+  bool callback_priority_enabled = false;
+#endif
 };
 
 }  // namespace memory_strategy

@@ -67,6 +67,10 @@ class SubscriptionBase : public std::enable_shared_from_this<SubscriptionBase>
 public:
   RCLCPP_SMART_PTR_DEFINITIONS_NOT_COPYABLE(SubscriptionBase)
 
+#ifdef PICAS
+  int callback_priority = 0;
+#endif
+
   /// Constructor.
   /**
    * This accepts rcl_subscription_options_t instead of rclcpp::SubscriptionOptions because

@@ -30,6 +30,10 @@
 
 #include "rmw/types.h"
 
+#ifdef PICAS
+#include <rclcpp/cb_sched.hpp>
+#endif
+
 namespace rclcpp
 {
 namespace memory_strategies
@@ -248,6 +252,14 @@ public:
     const WeakCallbackGroupsToNodesMap & weak_groups_to_nodes) override
   {
     auto it = subscription_handles_.begin();
+
+#ifdef PICAS
+    int highest_priority = -1;
+    #ifdef PICAS_DEBUG
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] subscription_handles_.size: %d", subscription_handles_.size());
+    #endif
+#endif
+
     while (it != subscription_handles_.end()) {
       auto subscription = get_subscription_by_handle(*it, weak_groups_to_nodes);
       if (subscription) {
@@ -265,6 +277,28 @@ public:
           ++it;
           continue;
         }
+
+#ifdef PICAS
+        // PiCAS: choose the highest-priority callback 
+        if (callback_priority_enabled) {
+          if (any_exec.subscription == nullptr || subscription->callback_priority > highest_priority) {
+            highest_priority = subscription->callback_priority;
+            any_exec.subscription = subscription;
+            any_exec.callback_group = group;
+            any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          }
+        } else {
+          // Otherwise it is safe to set and return the any_exec
+          any_exec.subscription = subscription;
+          any_exec.callback_group = group;
+          any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          subscription_handles_.erase(it);
+          #ifdef PICAS_DEBUG
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription found (node name: %s)", any_exec.node_base->get_name());
+          #endif
+          return;
+        }
+#else
         // Otherwise it is safe to set and return the any_exec
         any_exec.subscription = subscription;
         any_exec.callback_group = group;
@@ -272,9 +306,17 @@ public:
         subscription_handles_.erase(it);
         return;
       }
+#endif
+
       // Else, the subscription is no longer valid, remove it and continue
       it = subscription_handles_.erase(it);
     }
+
+#ifdef PICAS_DEBUG
+    if (any_exec.subscription) 
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] found (node name: %s, prio: %d)", 
+        any_exec.node_base->get_name(), any_exec.subscription->callback_priority);
+#endif
   }
 
   void
@@ -283,6 +325,14 @@ public:
     const WeakCallbackGroupsToNodesMap & weak_groups_to_nodes) override
   {
     auto it = service_handles_.begin();
+
+#ifdef PICAS
+    int highest_priority = -1;
+    #ifdef PICAS_DEBUG
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] service_handles_.size: %d", service_handles_.size());
+    #endif    
+#endif
+
     while (it != service_handles_.end()) {
       auto service = get_service_by_handle(*it, weak_groups_to_nodes);
       if (service) {
@@ -300,16 +350,45 @@ public:
           ++it;
           continue;
         }
+        
+#ifdef PICAS
+        // PiCAS: choose the highest-priority callback 
+        if (callback_priority_enabled) {
+          if (any_exec.service == nullptr || service->callback_priority > highest_priority) {
+            highest_priority = service->callback_priority;
+            any_exec.service = service;
+            any_exec.callback_group = group;
+            any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          }
+        } else {
+          // Otherwise it is safe to set and return the any_exec
+          any_exec.service = service;
+          any_exec.callback_group = group;
+          any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          service_handles_.erase(it);
+          #ifdef PICAS_DEBUG
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] found (node name: %s)", any_exec.node_base->get_name());
+          #endif
+          return;
+        }
+#else
         // Otherwise it is safe to set and return the any_exec
         any_exec.service = service;
         any_exec.callback_group = group;
         any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
         service_handles_.erase(it);
         return;
+#endif
       }
       // Else, the service is no longer valid, remove it and continue
       it = service_handles_.erase(it);
     }
+
+#ifdef PICAS_DEBUG
+    if (any_exec.service) 
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] found (node name: %s, prio: %d)", 
+        any_exec.node_base->get_name(), any_exec.service->callback_priority);
+#endif
   }
 
   void
@@ -318,6 +397,14 @@ public:
     const WeakCallbackGroupsToNodesMap & weak_groups_to_nodes) override
   {
     auto it = client_handles_.begin();
+
+#ifdef PICAS
+    int highest_priority = -1;
+    #ifdef PICAS_DEBUG
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] client_handles_.size: %d", client_handles_.size());
+    #endif
+#endif
+
     while (it != client_handles_.end()) {
       auto client = get_client_by_handle(*it, weak_groups_to_nodes);
       if (client) {
@@ -335,16 +422,45 @@ public:
           ++it;
           continue;
         }
+
+#ifdef PICAS
+        // PiCAS: choose the highest-priority callback 
+        if (callback_priority_enabled) {
+          if (any_exec.client == nullptr || client->callback_priority > highest_priority) {
+            highest_priority = client->callback_priority;
+            any_exec.client = client;
+            any_exec.callback_group = group;
+            any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          }
+        } else {
+          // Otherwise it is safe to set and return the any_exec
+          any_exec.client = client;
+          any_exec.callback_group = group;
+          any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          client_handles_.erase(it);
+          #ifdef PICAS_DEBUG
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] found (node name: %s)", any_exec.node_base->get_name());
+          #endif
+          return;
+        }
+#else
         // Otherwise it is safe to set and return the any_exec
         any_exec.client = client;
         any_exec.callback_group = group;
         any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
         client_handles_.erase(it);
         return;
+#endif
       }
       // Else, the service is no longer valid, remove it and continue
       it = client_handles_.erase(it);
     }
+
+#ifdef PICAS_DEBUG
+    if (any_exec.client) 
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] found (node name: %s, prio: %d)", 
+        any_exec.node_base->get_name(), any_exec.client->callback_priority);
+#endif
   }
 
   void
@@ -353,6 +469,14 @@ public:
     const WeakCallbackGroupsToNodesMap & weak_groups_to_nodes) override
   {
     auto it = timer_handles_.begin();
+
+#ifdef PICAS
+    int highest_priority = -1;
+    #ifdef PICAS_DEBUG
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] timer_handles_.size: %d", timer_handles_.size());
+    #endif
+#endif
+
     while (it != timer_handles_.end()) {
       auto timer = get_timer_by_handle(*it, weak_groups_to_nodes);
       if (timer) {
@@ -375,16 +499,45 @@ public:
           ++it;
           continue;
         }
+
+#ifdef PICAS
+        // PiCAS: choose the highest-priority callback 
+        if (callback_priority_enabled) {
+          if (any_exec.timer == nullptr || timer->callback_priority > highest_priority) {
+            highest_priority = timer->callback_priority;
+            any_exec.timer = timer;
+            any_exec.callback_group = group;
+            any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          }
+        } else {
+          // Otherwise it is safe to set and return the any_exec
+          any_exec.timer = timer;
+          any_exec.callback_group = group;
+          any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          timer_handles_.erase(it);
+          #ifdef PICAS_DEBUG
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] found (node name: %s)", any_exec.node_base->get_name());
+          #endif          
+          return;
+        }
+#else
         // Otherwise it is safe to set and return the any_exec
         any_exec.timer = timer;
         any_exec.callback_group = group;
         any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
         timer_handles_.erase(it);
         return;
+#endif
       }
       // Else, the timer is no longer valid, remove it and continue
       it = timer_handles_.erase(it);
     }
+
+#ifdef PICAS_DEBUG
+    if (any_exec.timer) 
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] found (node name: %s, prio: %d)", 
+        any_exec.node_base->get_name(), any_exec.timer->callback_priority);
+#endif
   }
 
   void
@@ -393,6 +546,14 @@ public:
     const WeakCallbackGroupsToNodesMap & weak_groups_to_nodes) override
   {
     auto it = waitable_handles_.begin();
+
+#ifdef PICAS
+    int highest_priority = -1;
+    #ifdef PICAS_DEBUG
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] waitable_handles_.size: %d", waitable_handles_.size());
+    #endif
+#endif
+
     while (it != waitable_handles_.end()) {
       std::shared_ptr<Waitable> & waitable = *it;
       if (waitable) {
@@ -410,16 +571,45 @@ public:
           ++it;
           continue;
         }
+
+#ifdef PICAS
+        // PiCAS: choose the highest-priority callback 
+        if (callback_priority_enabled) {
+          if (any_exec.waitable == nullptr || waitable->callback_priority > highest_priority) {
+            highest_priority = waitable->callback_priority;
+            any_exec.waitable = waitable;
+            any_exec.callback_group = group;
+            any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          }
+        } else {
+          // Otherwise it is safe to set and return the any_exec
+          any_exec.waitable = waitable;
+          any_exec.callback_group = group;
+          any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
+          waitable_handles_.erase(it);
+          #ifdef PICAS_DEBUG
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] found (node name: %s)", any_exec.node_base->get_name());
+          #endif
+          return;
+        }
+#else
         // Otherwise it is safe to set and return the any_exec
         any_exec.waitable = waitable;
         any_exec.callback_group = group;
         any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
         waitable_handles_.erase(it);
         return;
+#endif
       }
       // Else, the waitable is no longer valid, remove it and continue
       it = waitable_handles_.erase(it);
     }
+
+#ifdef PICAS_DEBUG
+    if (any_exec.waitable) 
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] found (node name: %s, prio: %d)", 
+        any_exec.node_base->get_name(), any_exec.waitable->callback_priority);
+#endif
   }
 
   rcl_allocator_t get_allocator() override

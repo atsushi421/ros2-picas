@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #include <string>
-#include <regex>
+// MEMO: Not used in PiCAS
+// #include <regex>
 #include <vector>
 
-#include "rcpputils/find_and_replace.hpp"
+// MEMO: Not used in PiCAS
+// #include "rcpputils/find_and_replace.hpp"
 #include "rclcpp/parameter_map.hpp"
 
 using rclcpp::exceptions::InvalidParametersException;
@@ -27,12 +29,13 @@ using rclcpp::ParameterValue;
 ParameterMap
 rclcpp::parameter_map_from(const rcl_params_t * const c_params)
 {
-  return parameter_map_from(c_params, nullptr);
-}
+// MEMO: Not used in PiCAS
+//   return parameter_map_from(c_params, nullptr);
+// }
 
-ParameterMap
-rclcpp::parameter_map_from(const rcl_params_t * const c_params, const char * node_fqn)
-{
+// ParameterMap
+// rclcpp::parameter_map_from(const rcl_params_t * const c_params, const char * node_fqn)
+// {
   if (NULL == c_params) {
     throw InvalidParametersException("parameters struct is NULL");
   } else if (NULL == c_params->node_names) {
@@ -57,16 +60,17 @@ rclcpp::parameter_map_from(const rcl_params_t * const c_params, const char * nod
       node_name = c_node_name;
     }
 
-    if (node_fqn) {
-      // Update the regular expression ["/*" -> "(/\\w+)" and "/**" -> "(/\\w+)*"]
-      std::string regex = rcpputils::find_and_replace(node_name, "/*", "(/\\w+)");
-      if (!std::regex_match(node_fqn, std::regex(regex))) {
-        // No need to parse the items because the user just care about node_fqn
-        continue;
-      }
+    // MEMO: Not used in PiCAS
+    // if (node_fqn) {
+    //   // Update the regular expression ["/*" -> "(/\\w+)" and "/**" -> "(/\\w+)*"]
+    //   std::string regex = rcpputils::find_and_replace(node_name, "/*", "(/\\w+)");
+    //   if (!std::regex_match(node_fqn, std::regex(regex))) {
+    //     // No need to parse the items because the user just care about node_fqn
+    //     continue;
+    //   }
 
-      node_name = node_fqn;
-    }
+    //   node_name = node_fqn;
+    // }
 
     const rcl_node_params_t * const c_params_node = &(c_params->params[n]);
 

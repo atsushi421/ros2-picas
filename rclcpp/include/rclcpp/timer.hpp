@@ -48,6 +48,10 @@ class TimerBase
 public:
   RCLCPP_SMART_PTR_DEFINITIONS_NOT_COPYABLE(TimerBase)
 
+#ifdef PICAS
+  int callback_priority = 0;
+#endif
+
   /// TimerBase constructor
   /**
    * \param clock A clock to use for time and sleeping

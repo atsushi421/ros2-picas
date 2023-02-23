@@ -34,6 +34,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wconversion -Wno-sign-conversion -Wpedantic -Wnon-virtual-dtor -Woverloaded-virtual)
 endif()
 
+# PICAS Executor
+if(${PICAS})
+  add_compile_options(-DPICAS)
+endif()
+
 set(${PROJECT_NAME}_SRCS
   src/rclcpp/any_executable.cpp
   src/rclcpp/callback_group.cpp
@@ -240,12 +245,13 @@ ament_export_dependencies(rcl_yaml_param_parser)
 ament_export_dependencies(statistics_msgs)
 ament_export_dependencies(tracetools)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+# MEMO: Not used in PiCAS
+# if(BUILD_TESTING)
+#   find_package(ament_lint_auto REQUIRED)
+#   ament_lint_auto_find_test_dependencies()
 
-  add_subdirectory(test)
-endif()
+#   add_subdirectory(test)
+# endif()
 
 ament_package()
 
@@ -254,9 +260,10 @@ install(
   DESTINATION include/${PROJECT_NAME}
 )
 
-if(TEST cppcheck)
-  # must set the property after ament_package()
-  set_tests_properties(cppcheck PROPERTIES TIMEOUT 500)
-endif()
+# MEMO: Not used in PiCAS
+# if(TEST cppcheck)
+#   # must set the property after ament_package()
+#   set_tests_properties(cppcheck PROPERTIES TIMEOUT 500)
+# endif()
 
 ament_generate_version_header(${PROJECT_NAME})
