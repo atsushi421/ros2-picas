@@ -29,6 +29,7 @@
 
 #include "rcl/guard_condition.h"
 #include "rcl/wait.h"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rclcpp/context.hpp"
 #include "rclcpp/contexts/default_context.hpp"
@@ -40,7 +41,6 @@
 #include "rclcpp/node_interfaces/node_base_interface.hpp"
 #include "rclcpp/utilities.hpp"
 #include "rclcpp/visibility_control.hpp"
-#include "rclcpp/scope_exit.hpp"
 
 namespace rclcpp
 {
@@ -305,7 +305,9 @@ public:
    * If the time that waitables take to be executed is longer than the period on which new waitables
    * become ready, this method will execute work repeatedly until `max_duration` has elapsed.
    *
-   * \param[in] max_duration The maximum amount of time to spend executing work. Must be positive.
+   * \param[in] max_duration The maximum amount of time to spend executing work, must be >= 0.
+   *   `0` is potentially block forever until no more work is available.
+   * \throw std::invalid_argument if max_duration is less than 0.
    * Note that spin_all() may take longer than this time as it only returns once max_duration has
    * been exceeded.
    */
@@ -354,7 +356,7 @@ public:
     if (spinning.exchange(true)) {
       throw std::runtime_error("spin_until_future_complete() called while already spinning");
     }
-    RCLCPP_SCOPE_EXIT(this->spinning.store(false); );
+    RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
     while (rclcpp::ok(this->context_) && spinning.load()) {
       // Do one item of work.
       spin_once_impl(timeout_left);
@@ -401,90 +403,16 @@ public:
   void
   set_memory_strategy(memory_strategy::MemoryStrategy::SharedPtr memory_strategy);
 
-#ifdef PICAS
-  bool callback_priority_enabled = false;
-  int executor_priority = 0;
-  int executor_cpu = 0;
-
+  /// Returns true if the executor is currently spinning.
+  /**
+   * This function can be called asynchronously from any thread.
+   * \return True if the executor is currently spinning.
+   */
   RCLCPP_PUBLIC
-  void 
-  set_executor_priority_cpu(int priority, int cpu) // deprecated: for single-threaded executors only
-  {
-    executor_priority = priority;
-    executor_cpu = cpu;    
-  }
-
-  RCLCPP_PUBLIC
-  void 
-  enable_callback_priority()
-  {
-    callback_priority_enabled = true;
-    if (memory_strategy_) memory_strategy_->callback_priority_enabled = true;
-  }
-
-  RCLCPP_PUBLIC
-  void 
-  disable_callback_priority()
-  {
-    callback_priority_enabled = false;
-    if (memory_strategy_) memory_strategy_->callback_priority_enabled = false;
-  }
-
-  RCLCPP_PUBLIC
-  void
-  set_callback_priority(rclcpp::TimerBase::SharedPtr ptr, int priority)
-  {
-    if (!ptr) return;
-    ptr->callback_priority = priority;
-  }
-
-  RCLCPP_PUBLIC
-  void 
-  set_callback_priority(rclcpp::SubscriptionBase::SharedPtr ptr, int priority)
-  {
-    if (!ptr) return;
-    ptr->callback_priority = priority;
- 
-    // There might be other waitables associated with the subscription
-    // (e.g., events, intra-process msgs; see NodeTopics::add_subscription() in node_topics.cpp)
-    auto intra_process_waitable = ptr->get_intra_process_waitable();
-    if (intra_process_waitable) {
-      intra_process_waitable->callback_priority = priority;
-    }
-    for (auto & subscription_event : ptr->get_event_handlers()) {
-      subscription_event->callback_priority = priority;
-    }
-  }
-
-  RCLCPP_PUBLIC
-  void
-  set_callback_priority(rclcpp::ServiceBase::SharedPtr ptr, int priority)
-  {
-    if (ptr) ptr->callback_priority = priority;
-  }
-
-  RCLCPP_PUBLIC
-  void
-  set_callback_priority(rclcpp::ClientBase::SharedPtr ptr, int priority)
-  {
-    if (ptr) ptr->callback_priority = priority;
-  }
-
-  RCLCPP_PUBLIC
-  void
-  set_callback_priority(rclcpp::Waitable::SharedPtr ptr, int priority)
-  {
-    if (ptr) ptr->callback_priority = priority;
-  }
-#endif
+  bool
+  is_spinning();
 
 protected:
-#ifdef PICAS
-  RCLCPP_PUBLIC
-  void
-  print_list_ready_executable(AnyExecutable & any_executable);
-#endif
-
   RCLCPP_PUBLIC
   void
   spin_node_once_nanoseconds(
@@ -538,6 +466,7 @@ protected:
   /// Return true if the node has been added to this executor.
   /**
    * \param[in] node_ptr a shared pointer that points to a node base interface
+   * \param[in] weak_groups_to_nodes map to nodes to lookup
    * \return true if the node is associated with the executor, otherwise false
    */
   RCLCPP_PUBLIC
@@ -608,7 +537,7 @@ protected:
   std::atomic_bool spinning;
 
   /// Guard condition for signaling the rmw layer to wake up for special events.
-  rcl_guard_condition_t interrupt_guard_condition_ = rcl_get_zero_initialized_guard_condition();
+  rclcpp::GuardCondition interrupt_guard_condition_;
 
   std::shared_ptr<rclcpp::GuardCondition> shutdown_guard_condition_;
 
@@ -631,14 +560,14 @@ protected:
   virtual void
   spin_once_impl(std::chrono::nanoseconds timeout);
 
-  typedef std::map<rclcpp::node_interfaces::NodeBaseInterface::WeakPtr,
-      const rcl_guard_condition_t *,
-      std::owner_less<rclcpp::node_interfaces::NodeBaseInterface::WeakPtr>>
-    WeakNodesToGuardConditionsMap;
+  typedef std::map<rclcpp::CallbackGroup::WeakPtr,
+      const rclcpp::GuardCondition *,
+      std::owner_less<rclcpp::CallbackGroup::WeakPtr>>
+    WeakCallbackGroupsToGuardConditionsMap;
 
-  /// maps nodes to guard conditions
-  WeakNodesToGuardConditionsMap
-  weak_nodes_to_guard_conditions_ RCPPUTILS_TSA_GUARDED_BY(mutex_);
+  /// maps callback groups to guard conditions
+  WeakCallbackGroupsToGuardConditionsMap
+  weak_groups_to_guard_conditions_ RCPPUTILS_TSA_GUARDED_BY(mutex_);
 
   /// maps callback groups associated to nodes
   WeakCallbackGroupsToNodesMap
@@ -658,8 +587,6 @@ protected:
 
   /// shutdown callback handle registered to Context
   rclcpp::OnShutdownCallbackHandle shutdown_callback_handle_;
-
-
 };
 
 }  // namespace rclcpp
