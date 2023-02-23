@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#define PICAS_DEBUG // comment this out for non-debug mode
+
 #include <algorithm>
 #include <memory>
 #include <map>

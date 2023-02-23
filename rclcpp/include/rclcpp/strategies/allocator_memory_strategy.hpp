@@ -15,6 +15,8 @@
 #ifndef RCLCPP__STRATEGIES__ALLOCATOR_MEMORY_STRATEGY_HPP_
 #define RCLCPP__STRATEGIES__ALLOCATOR_MEMORY_STRATEGY_HPP_
 
+#define PICAS_DEBUG // comment this out for non-debug mode
+
 #include <memory>
 #include <vector>
 
