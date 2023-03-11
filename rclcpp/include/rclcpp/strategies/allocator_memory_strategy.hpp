@@ -338,7 +338,7 @@ public:
 #ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
-          if (any_exec.service == nullptr || service->callback_priority > highest_priority) {
+          if (service && (any_exec.service == nullptr || service->callback_priority > highest_priority)) {
             highest_priority = service->callback_priority;
             any_exec.service = service;
             any_exec.callback_group = group;
@@ -398,7 +398,7 @@ public:
 #ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
-          if (any_exec.client == nullptr || client->callback_priority > highest_priority) {
+          if (client && (any_exec.client == nullptr || client->callback_priority > highest_priority)) {
             highest_priority = client->callback_priority;
             any_exec.client = client;
             any_exec.callback_group = group;
@@ -466,7 +466,7 @@ public:
 #ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
-          if (any_exec.timer == nullptr || timer->callback_priority > highest_priority) {
+          if (timer && (any_exec.timer == nullptr || timer->callback_priority > highest_priority)) {
             highest_priority = timer->callback_priority;
             any_exec.timer = timer;
             any_exec.callback_group = group;
