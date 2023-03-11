@@ -15,7 +15,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 //#include "std_msgs/msg/string.hpp"
-#include "test_msgs/msg/detail/test_string__struct.hpp"
+#include "test_msgs/msg/test_string.hpp"
 
 using std::placeholders::_1;
 //std::mutex mtx;
