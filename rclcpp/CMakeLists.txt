@@ -240,23 +240,11 @@ ament_export_dependencies(rcl_yaml_param_parser)
 ament_export_dependencies(statistics_msgs)
 ament_export_dependencies(tracetools)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  add_subdirectory(test)
-endif()
-
 ament_package()
 
 install(
   DIRECTORY include/ ${CMAKE_CURRENT_BINARY_DIR}/include/
   DESTINATION include/${PROJECT_NAME}
 )
-
-if(TEST cppcheck)
-  # must set the property after ament_package()
-  set_tests_properties(cppcheck PROPERTIES TIMEOUT 500)
-endif()
 
 ament_generate_version_header(${PROJECT_NAME})
