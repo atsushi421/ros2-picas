@@ -22,41 +22,10 @@
 #include <thread>
 #include <unordered_map>
 
-#include "rclcpp/detail/mutex_two_priorities.hpp"
 #include "rclcpp/executor.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp/memory_strategies.hpp"
 #include "rclcpp/visibility_control.hpp"
-
-#ifdef PICAS
-#include <rclcpp/cb_sched.hpp>
-#include <unistd.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <sys/syscall.h>
-#include <linux/sched.h>
-
-// for sched_deadline
-#include <pthread.h>
-#define gettid() syscall(__NR_gettid)
-struct sched_attr {
-    int32_t size;
-
-    int32_t sched_policy;
-    int64_t sched_flags;
-
-    /* SCHED_NORMAL, SCHED_BATCH */
-    int32_t sched_nice;
-
-    /* SCHED_FIFO, SCHED_RR */
-    int32_t sched_priority;
-
-    /* SCHED_DEADLINE (nsec) */
-    int64_t sched_runtime;
-    int64_t sched_deadline;
-    int64_t sched_period;
-};
-#endif
 
 namespace rclcpp
 {
@@ -83,7 +52,7 @@ public:
    * \param timeout maximum time to wait
    */
   RCLCPP_PUBLIC
-  MultiThreadedExecutor(
+  explicit MultiThreadedExecutor(
     const rclcpp::ExecutorOptions & options = rclcpp::ExecutorOptions(),
     size_t number_of_threads = 0,
     bool yield_before_execute = false,
@@ -104,11 +73,6 @@ public:
   size_t
   get_number_of_threads();
 
-#ifdef PICAS
-  std::vector<int> cpus;
-  struct sched_attr rt_attr;
-#endif
-
 protected:
   RCLCPP_PUBLIC
   void
@@ -117,12 +81,10 @@ protected:
 private:
   RCLCPP_DISABLE_COPY(MultiThreadedExecutor)
 
-  detail::MutexTwoPriorities wait_mutex_;
+  std::mutex wait_mutex_;
   size_t number_of_threads_;
   bool yield_before_execute_;
   std::chrono::nanoseconds next_exec_timeout_;
-
-  std::set<TimerBase::SharedPtr> scheduled_timers_;
 };
 
 }  // namespace executors
