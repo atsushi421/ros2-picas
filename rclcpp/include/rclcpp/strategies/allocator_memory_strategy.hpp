@@ -278,7 +278,7 @@ public:
 #ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
-          if (any_exec.subscription == nullptr || subscription->callback_priority > highest_priority) {
+          if (subscription && (any_exec.subscription == nullptr || subscription->callback_priority > highest_priority)) {
             highest_priority = subscription->callback_priority;
             any_exec.subscription = subscription;
             any_exec.callback_group = group;
@@ -526,7 +526,7 @@ public:
 #ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
-          if (any_exec.waitable == nullptr || waitable->callback_priority > highest_priority) {
+          if (waitable && (any_exec.waitable == nullptr || waitable->callback_priority > highest_priority)) {
             highest_priority = waitable->callback_priority;
             any_exec.waitable = waitable;
             any_exec.callback_group = group;

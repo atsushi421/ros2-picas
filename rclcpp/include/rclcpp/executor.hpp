@@ -460,7 +460,9 @@ public:
       intra_process_waitable->callback_priority = priority;
     }
     for (auto & subscription_event_pair : ptr->get_event_handlers()) {
-      subscription_event_pair.second->callback_priority = priority;
+      if (subscription_event_pair.second) {
+        subscription_event_pair.second->callback_priority = priority;
+      }
     }
   }
 
