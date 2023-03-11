@@ -35,6 +35,12 @@
 
 #include "tracetools/tracetools.h"
 
+#ifdef PICAS
+#include <rclcpp/cb_sched.hpp>
+#include "rclcpp/memory_strategy.hpp"
+using rclcpp::memory_strategy::MemoryStrategy;
+#endif
+
 using namespace std::chrono_literals;
 
 using rclcpp::exceptions::throw_from_rcl_error;
@@ -836,41 +842,95 @@ Executor::get_next_ready_executable_from_map(
 {
   TRACEPOINT(rclcpp_executor_get_next_ready);
   bool success = false;
-  std::lock_guard<std::mutex> guard{mutex_};
-  // Check the timers to see if there are any that are ready
-  memory_strategy_->get_next_timer(any_executable, weak_groups_to_nodes);
-  if (any_executable.timer) {
-    success = true;
-  }
-  if (!success) {
-    // Check the subscriptions to see if there are any that are ready
+
+#ifdef PICAS
+  // PiCAS
+  if (callback_priority_enabled) {
+    // Check timers/subscriptions/services/clients/waitables and 
+    // keep only the highest-priority one
+    int highest_priority = -1;
+
+    memory_strategy_->get_next_timer(any_executable, weak_groups_to_nodes);
+    if (any_executable.timer) {
+      highest_priority = any_executable.timer->callback_priority;
+    }
+
     memory_strategy_->get_next_subscription(any_executable, weak_groups_to_nodes);
-    if (any_executable.subscription) {
-      success = true;
+    if (any_executable.subscription && highest_priority < any_executable.subscription->callback_priority) {
+      highest_priority = any_executable.subscription->callback_priority;
+      any_executable.timer = nullptr;
     }
-  }
-  if (!success) {
-    // Check the services to see if there are any that are ready
+    else any_executable.subscription = nullptr;
+
     memory_strategy_->get_next_service(any_executable, weak_groups_to_nodes);
-    if (any_executable.service) {
-      success = true;
+    if (any_executable.service && highest_priority < any_executable.service->callback_priority) {
+      highest_priority = any_executable.service->callback_priority;
+      any_executable.timer = nullptr;
+      any_executable.subscription = nullptr;
     }
-  }
-  if (!success) {
-    // Check the clients to see if there are any that are ready
+    else any_executable.service = nullptr;
+
     memory_strategy_->get_next_client(any_executable, weak_groups_to_nodes);
-    if (any_executable.client) {
-      success = true;
+    if (any_executable.client && highest_priority < any_executable.client->callback_priority) {
+      highest_priority = any_executable.client->callback_priority;
+      any_executable.timer = nullptr;
+      any_executable.subscription = nullptr;
+      any_executable.service = nullptr;
     }
-  }
-  if (!success) {
-    // Check the waitables to see if there are any that are ready
+    else any_executable.client = nullptr;
+
     memory_strategy_->get_next_waitable(any_executable, weak_groups_to_nodes);
-    if (any_executable.waitable) {
+    if (any_executable.waitable && highest_priority < any_executable.waitable->callback_priority) {
+      highest_priority = any_executable.waitable->callback_priority;
       any_executable.data = any_executable.waitable->take_data();
+      any_executable.timer = nullptr;
+      any_executable.subscription = nullptr;
+      any_executable.service = nullptr;
+      any_executable.client = nullptr;
+    }
+    else any_executable.waitable = nullptr;
+
+    if (highest_priority >= 0) success = true;
+  } else {
+#endif
+    std::lock_guard<std::mutex> guard{mutex_};
+    // Check the timers to see if there are any that are ready
+    memory_strategy_->get_next_timer(any_executable, weak_groups_to_nodes);
+    if (any_executable.timer) {
       success = true;
     }
+    if (!success) {
+      // Check the subscriptions to see if there are any that are ready
+      memory_strategy_->get_next_subscription(any_executable, weak_groups_to_nodes);
+      if (any_executable.subscription) {
+        success = true;
+      }
+    }
+    if (!success) {
+      // Check the services to see if there are any that are ready
+      memory_strategy_->get_next_service(any_executable, weak_groups_to_nodes);
+      if (any_executable.service) {
+        success = true;
+      }
+    }
+    if (!success) {
+      // Check the clients to see if there are any that are ready
+      memory_strategy_->get_next_client(any_executable, weak_groups_to_nodes);
+      if (any_executable.client) {
+        success = true;
+      }
+    }
+    if (!success) {
+      // Check the waitables to see if there are any that are ready
+      memory_strategy_->get_next_waitable(any_executable, weak_groups_to_nodes);
+      if (any_executable.waitable) {
+        any_executable.data = any_executable.waitable->take_data();
+        success = true;
+      }
+    }
+#ifdef PICAS
   }
+#endif
   // At this point any_executable should be valid with either a valid subscription
   // or a valid timer, or it should be a null shared_ptr
   if (success) {

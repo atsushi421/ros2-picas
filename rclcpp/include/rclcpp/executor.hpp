@@ -408,6 +408,90 @@ public:
    * This function can be called asynchronously from any thread.
    * \return True if the executor is currently spinning.
    */
+
+#ifdef PICAS
+  bool callback_priority_enabled = false;
+  int executor_priority = 0;
+  int executor_cpu = 0;
+
+  RCLCPP_PUBLIC
+  void 
+  set_executor_priority_cpu(int priority, int cpu) // deprecated: for single-threaded executors only
+  {
+    executor_priority = priority;
+    executor_cpu = cpu;    
+  }
+
+  RCLCPP_PUBLIC
+  void 
+  enable_callback_priority()
+  {
+    callback_priority_enabled = true;
+    if (memory_strategy_) memory_strategy_->callback_priority_enabled = true;
+  }
+
+  RCLCPP_PUBLIC
+  void 
+  disable_callback_priority()
+  {
+    callback_priority_enabled = false;
+    if (memory_strategy_) memory_strategy_->callback_priority_enabled = false;
+  }
+
+  RCLCPP_PUBLIC
+  void
+  set_callback_priority(rclcpp::TimerBase::SharedPtr ptr, int priority)
+  {
+    if (!ptr) return;
+    ptr->callback_priority = priority;
+  }
+
+  RCLCPP_PUBLIC
+  void 
+  set_callback_priority(rclcpp::SubscriptionBase::SharedPtr ptr, int priority)
+  {
+    if (!ptr) return;
+    ptr->callback_priority = priority;
+ 
+    // There might be other waitables associated with the subscription
+    // (e.g., events, intra-process msgs; see NodeTopics::add_subscription() in node_topics.cpp)
+    auto intra_process_waitable = ptr->get_intra_process_waitable();
+    if (intra_process_waitable) {
+      intra_process_waitable->callback_priority = priority;
+    }
+    for (auto & subscription_event_pair : ptr->get_event_handlers()) {
+      subscription_event_pair.second->callback_priority = priority;
+    }
+  }
+
+  RCLCPP_PUBLIC
+  void
+  set_callback_priority(rclcpp::ServiceBase::SharedPtr ptr, int priority)
+  {
+    if (ptr) ptr->callback_priority = priority;
+  }
+
+  RCLCPP_PUBLIC
+  void
+  set_callback_priority(rclcpp::ClientBase::SharedPtr ptr, int priority)
+  {
+    if (ptr) ptr->callback_priority = priority;
+  }
+
+  RCLCPP_PUBLIC
+  void
+  set_callback_priority(rclcpp::Waitable::SharedPtr ptr, int priority)
+  {
+    if (ptr) ptr->callback_priority = priority;
+  }
+#endif
+
+#ifdef PICAS
+  RCLCPP_PUBLIC
+  void
+  print_list_ready_executable(AnyExecutable & any_executable);
+#endif
+
   RCLCPP_PUBLIC
   bool
   is_spinning();

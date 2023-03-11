@@ -50,7 +50,7 @@ make_scope_exit(Callable callable)
 
 }  // namespace rclcpp
 
-#define RCLCPP_SCOPE_EXIT(code) \
+#define RCPPUTILS_SCOPE_EXIT(code) \
   auto RCLCPP_STRING_JOIN(scope_exit_, __LINE__) = rclcpp::make_scope_exit([&]() {code;})
 
 #endif  // RCLCPP__SCOPE_EXIT_HPP_

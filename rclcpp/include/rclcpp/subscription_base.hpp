@@ -67,6 +67,10 @@ class SubscriptionBase : public std::enable_shared_from_this<SubscriptionBase>
 public:
   RCLCPP_SMART_PTR_DEFINITIONS_NOT_COPYABLE(SubscriptionBase)
 
+#ifdef PICAS
+  int callback_priority = 0;
+#endif
+
   /// Constructor.
   /**
    * This accepts rcl_subscription_options_t instead of rclcpp::SubscriptionOptions because
@@ -579,7 +583,7 @@ private:
   std::atomic<bool> intra_process_subscription_waitable_in_use_by_wait_set_{false};
   std::unordered_map<rclcpp::QOSEventHandlerBase *,
     std::atomic<bool>> qos_events_in_use_by_wait_set_;
-
+  
   std::recursive_mutex callback_mutex_;
   std::function<void(size_t)> on_new_message_callback_{nullptr};
 };
