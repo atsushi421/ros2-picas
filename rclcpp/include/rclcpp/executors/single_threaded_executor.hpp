@@ -69,14 +69,6 @@ public:
   RCLCPP_PUBLIC
   void
   spin_rt();
-  
-  RCLCPP_PUBLIC
-  void
-  spin_cpu(int c);
-
-  RCLCPP_PUBLIC
-  void
-  spin_deadline(int p, int T, int budget);
 #endif
 
 private:

@@ -78,31 +78,6 @@ static long int sched_setattr(pid_t pid, const struct sched_attr *attr, unsigned
   return syscall(__NR_sched_setattr, pid, attr, flags);
 }
 
-//static long int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size, unsigned int flags)
-//{
-//  return syscall(__NR_sched_getattr, pid, attr, size, flags);
-//}
-
-// Belows are the added code for ROS2-PiCAS
-void
-SingleThreadedExecutor::spin_cpu(int cpu)
-{
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Singlethreadedexecutor spin: in Thread ID %ld", gettid());
-  if (cpu >= 0) {
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(cpu, &cpuset);
-    if(pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset)) {
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "spin_cpu has an error.");
-    }
-  }
-
-  if (spinning.exchange(true)) {
-    throw std::runtime_error("spin() called while already spinning");
-  }
-  RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
-}
-
 void
 SingleThreadedExecutor::spin_rt()
 {
@@ -137,50 +112,6 @@ SingleThreadedExecutor::spin_rt()
       //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Done execution in any_executable.");
     } else {
       //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Nothing to execute in any_executable. Go to the next loop.");
-    }
-  }
-}
-
-void
-SingleThreadedExecutor::spin_deadline(int rt_priority, int T, int budget)
-{
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Singlethreadedexecutor spin_deadline: in Thread ID %ld", gettid());
-
-  
-  // Register executor as a real-time thread
-  if (rt_priority != 0) {
-
-    struct sched_attr attr;
-    long int ret;
-    unsigned int flags = 0;
-
-    attr.size = sizeof(attr);
-    attr.sched_flags = 0;
-    attr.sched_nice = 0;
-    attr.sched_priority = 0;
-
-     /* creates a 10ms/30ms reservation */
-    attr.sched_policy = SCHED_DEADLINE;
-    attr.sched_runtime = budget * 1000 * 1000;
-    attr.sched_period  = T * 1000 * 1000;
-    attr.sched_deadline= T * 1000 * 1000;
-
-    ret = sched_setattr(0, &attr, flags);
-    if (ret < 0) {
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "spin_deadline thread has an error.");
-    }
-  }
-
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "spin_deadline thread is on CPU %d.", sched_getcpu());      
-  
-  if (spinning.exchange(true)) {
-    throw std::runtime_error("spin() called while already spinning");
-  }
-  RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
-  while (rclcpp::ok(this->context_) && spinning.load()) {
-    rclcpp::AnyExecutable any_executable;
-    if (get_next_executable(any_executable)) {
-      execute_any_executable(any_executable);
     }
   }
 }
