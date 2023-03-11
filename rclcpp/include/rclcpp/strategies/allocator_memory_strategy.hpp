@@ -257,9 +257,6 @@ public:
 
 #ifdef PICAS
     int highest_priority = -1;
-    #ifdef PICAS_DEBUG
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] subscription_handles_.size: %d", subscription_handles_.size());
-    #endif
 #endif
 
     while (it != subscription_handles_.end()) {
@@ -295,9 +292,6 @@ public:
           any_exec.callback_group = group;
           any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
           subscription_handles_.erase(it);
-          #ifdef PICAS_DEBUG
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription found (node name: %s)", any_exec.node_base->get_name());
-          #endif
           return;
         }
 #else
@@ -312,12 +306,6 @@ public:
       // Else, the subscription is no longer valid, remove it and continue
       it = subscription_handles_.erase(it);
     }
-
-#ifdef PICAS_DEBUG
-    if (any_exec.subscription) 
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] found (node name: %s, prio: %d)", 
-        any_exec.node_base->get_name(), any_exec.subscription->callback_priority);
-#endif
   }
 
   void
@@ -329,9 +317,6 @@ public:
 
 #ifdef PICAS
     int highest_priority = -1;
-    #ifdef PICAS_DEBUG
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] service_handles_.size: %d", service_handles_.size());
-    #endif    
 #endif
 
     while (it != service_handles_.end()) {
@@ -367,9 +352,6 @@ public:
           any_exec.callback_group = group;
           any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
           service_handles_.erase(it);
-          #ifdef PICAS_DEBUG
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] found (node name: %s)", any_exec.node_base->get_name());
-          #endif
           return;
         }
 #else
@@ -384,12 +366,6 @@ public:
       // Else, the service is no longer valid, remove it and continue
       it = service_handles_.erase(it);
     }
-
-#ifdef PICAS_DEBUG
-    if (any_exec.service) 
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] found (node name: %s, prio: %d)", 
-        any_exec.node_base->get_name(), any_exec.service->callback_priority);
-#endif
   }
 
   void
@@ -401,9 +377,6 @@ public:
 
 #ifdef PICAS
     int highest_priority = -1;
-    #ifdef PICAS_DEBUG
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] client_handles_.size: %d", client_handles_.size());
-    #endif
 #endif
 
     while (it != client_handles_.end()) {
@@ -439,9 +412,6 @@ public:
           any_exec.callback_group = group;
           any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
           client_handles_.erase(it);
-          #ifdef PICAS_DEBUG
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] found (node name: %s)", any_exec.node_base->get_name());
-          #endif
           return;
         }
 #else
@@ -456,12 +426,6 @@ public:
       // Else, the service is no longer valid, remove it and continue
       it = client_handles_.erase(it);
     }
-
-#ifdef PICAS_DEBUG
-    if (any_exec.client) 
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] found (node name: %s, prio: %d)", 
-        any_exec.node_base->get_name(), any_exec.client->callback_priority);
-#endif
   }
 
   void
@@ -473,9 +437,6 @@ public:
 
 #ifdef PICAS
     int highest_priority = -1;
-    #ifdef PICAS_DEBUG
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] timer_handles_.size: %d", timer_handles_.size());
-    #endif
 #endif
 
     while (it != timer_handles_.end()) {
@@ -516,9 +477,6 @@ public:
           any_exec.callback_group = group;
           any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
           timer_handles_.erase(it);
-          #ifdef PICAS_DEBUG
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] found (node name: %s)", any_exec.node_base->get_name());
-          #endif          
           return;
         }
 #else
@@ -533,12 +491,6 @@ public:
       // Else, the timer is no longer valid, remove it and continue
       it = timer_handles_.erase(it);
     }
-
-#ifdef PICAS_DEBUG
-    if (any_exec.timer) 
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] found (node name: %s, prio: %d)", 
-        any_exec.node_base->get_name(), any_exec.timer->callback_priority);
-#endif
   }
 
   void
@@ -550,9 +502,6 @@ public:
 
 #ifdef PICAS
     int highest_priority = -1;
-    #ifdef PICAS_DEBUG
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] waitable_handles_.size: %d", waitable_handles_.size());
-    #endif
 #endif
 
     while (it != waitable_handles_.end()) {
@@ -588,9 +537,6 @@ public:
           any_exec.callback_group = group;
           any_exec.node_base = get_node_by_group(group, weak_groups_to_nodes);
           waitable_handles_.erase(it);
-          #ifdef PICAS_DEBUG
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] found (node name: %s)", any_exec.node_base->get_name());
-          #endif
           return;
         }
 #else
@@ -605,12 +551,6 @@ public:
       // Else, the waitable is no longer valid, remove it and continue
       it = waitable_handles_.erase(it);
     }
-
-#ifdef PICAS_DEBUG
-    if (any_exec.waitable) 
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] found (node name: %s, prio: %d)", 
-        any_exec.node_base->get_name(), any_exec.waitable->callback_priority);
-#endif
   }
 
   rcl_allocator_t get_allocator() override
