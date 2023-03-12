@@ -105,13 +105,13 @@ SingleThreadedExecutor::spin_rt()
   }
   RCPPUTILS_SCOPE_EXIT(this->spinning.store(false); );
   while (rclcpp::ok(this->context_) && spinning.load()) {
-    //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Start spin loop. Initialize any_executable.");    
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Start spin loop. Initialize any_executable.");    
     rclcpp::AnyExecutable any_executable;
     if (get_next_executable(any_executable)) {
       execute_any_executable(any_executable);
-      //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Done execution in any_executable.");
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Done execution in any_executable.");
     } else {
-      //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Nothing to execute in any_executable. Go to the next loop.");
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[spin_rt] Nothing to execute in any_executable. Go to the next loop.");
     }
   }
 }
