@@ -488,12 +488,6 @@ public:
   }
 #endif
 
-#ifdef PICAS
-  RCLCPP_PUBLIC
-  void
-  print_list_ready_executable(AnyExecutable & any_executable);
-#endif
-
   RCLCPP_PUBLIC
   bool
   is_spinning();

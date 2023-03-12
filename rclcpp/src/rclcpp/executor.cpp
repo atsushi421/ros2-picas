@@ -850,19 +850,19 @@ Executor::get_next_ready_executable_from_map(
     // keep only the highest-priority one
     int highest_priority = -1;
 
-    memory_strategy_->get_next_timer(any_executable, weak_groups_to_nodes);
+    if (memory_strategy_) memory_strategy_->get_next_timer(any_executable, weak_groups_to_nodes);
     if (any_executable.timer) {
       highest_priority = any_executable.timer->callback_priority;
     }
 
-    memory_strategy_->get_next_subscription(any_executable, weak_groups_to_nodes);
+    if (memory_strategy_) memory_strategy_->get_next_subscription(any_executable, weak_groups_to_nodes);
     if (any_executable.subscription && highest_priority < any_executable.subscription->callback_priority) {
       highest_priority = any_executable.subscription->callback_priority;
       any_executable.timer = nullptr;
     }
     else any_executable.subscription = nullptr;
 
-    memory_strategy_->get_next_service(any_executable, weak_groups_to_nodes);
+    if (memory_strategy_) memory_strategy_->get_next_service(any_executable, weak_groups_to_nodes);
     if (any_executable.service && highest_priority < any_executable.service->callback_priority) {
       highest_priority = any_executable.service->callback_priority;
       any_executable.timer = nullptr;
@@ -870,7 +870,7 @@ Executor::get_next_ready_executable_from_map(
     }
     else any_executable.service = nullptr;
 
-    memory_strategy_->get_next_client(any_executable, weak_groups_to_nodes);
+    if (memory_strategy_) memory_strategy_->get_next_client(any_executable, weak_groups_to_nodes);
     if (any_executable.client && highest_priority < any_executable.client->callback_priority) {
       highest_priority = any_executable.client->callback_priority;
       any_executable.timer = nullptr;
@@ -879,7 +879,7 @@ Executor::get_next_ready_executable_from_map(
     }
     else any_executable.client = nullptr;
 
-    memory_strategy_->get_next_waitable(any_executable, weak_groups_to_nodes);
+    if (memory_strategy_) memory_strategy_->get_next_waitable(any_executable, weak_groups_to_nodes);
     if (any_executable.waitable && highest_priority < any_executable.waitable->callback_priority) {
       highest_priority = any_executable.waitable->callback_priority;
       any_executable.data = any_executable.waitable->take_data();
