@@ -53,7 +53,7 @@ SingleThreadedExecutor::spin()
 
 // for sched_deadline
 #include <pthread.h>
-#define gettid() syscall(__NR_gettid)
+// #define gettid() syscall(__NR_gettid)
 struct sched_attr {
     int32_t size;
 

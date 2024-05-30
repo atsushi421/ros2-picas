@@ -46,8 +46,8 @@ public:
 
 #ifdef PICAS
   int callback_priority = 0;
-  size_t threadAffinity = 0;
 #endif
+  int thread_affinity = -1;
 
   RCLCPP_PUBLIC
   explicit ServiceBase(std::shared_ptr<rcl_node_t> node_handle);

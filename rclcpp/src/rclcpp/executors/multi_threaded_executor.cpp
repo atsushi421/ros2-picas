@@ -132,7 +132,7 @@ MultiThreadedExecutor::run(size_t thread_id)
   }
 #else
 void
-MultiThreadedExecutor::run(size_t)
+MultiThreadedExecutor::run(size_t thread_id)
 {
 #endif
   while (rclcpp::ok(this->context_) && spinning.load()) {

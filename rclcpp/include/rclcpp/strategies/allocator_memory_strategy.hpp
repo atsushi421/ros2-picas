@@ -283,7 +283,6 @@ public:
       auto subscription = get_subscription_by_handle(*it, weak_groups_to_nodes);
       if (subscription) {
         // Find the group for this handle and see if it can be serviced
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] thread affinity = %d", subscription->threadAffinity);
         auto group = get_group_by_subscription(subscription, weak_groups_to_nodes);
         if (!group) {
           // Group was not found, meaning the subscription is not valid...
@@ -297,16 +296,19 @@ public:
           ++it;
           continue;
         }
-
-#ifdef PICAS
-        // if((service->threadAffinity != 0) && ((service->threadAffinity & (1 << (thread_affinity_id - 1))) == 0)) { TODO: remove below condition.
-        if((subscription->threadAffinity & (1 << thread_affinity_id)) == 0) {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity unmatched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, subscription->callback_priority, subscription->threadAffinity);
+        if((subscription->thread_affinity != -1) && (subscription->thread_affinity != thread_affinity_id)) {
+          // The callback thread affinity is set but is different from thread id, so skip it for now
+          // Leave it to be checked next time, but continue searching            
+            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] Skipped: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, subscription->thread_affinity);
             ++it;
             continue;
-        } else {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, subscription->callback_priority, subscription->threadAffinity);
         }
+        // else {
+        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_subscription] Queued: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, subscription->thread_affinity);
+
+        // }
+
+#ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
           if (any_exec.subscription == nullptr || subscription->callback_priority > highest_priority) {
@@ -376,15 +378,18 @@ public:
           ++it;
           continue;
         }
-
-#ifdef PICAS
-        if((service->threadAffinity != 0) && ((service->threadAffinity & (1 << thread_affinity_id)) == 0)) {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity unmatched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, service->callback_priority, service->threadAffinity);
+        if((service->thread_affinity != -1) && (service->thread_affinity != thread_affinity_id)) {
+          // The callback thread affinity is set but is different from thread id, so skip it for now
+          // Leave it to be checked next time, but continue searching           
+            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] Skipped: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, service->thread_affinity);
             ++it;
             continue;
-        } else {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, service->callback_priority, service->threadAffinity);
         }
+        // else {
+        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_service] Queued: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, service->thread_affinity);
+        // }
+
+#ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
           if (any_exec.service == nullptr || service->callback_priority > highest_priority) {
@@ -453,15 +458,19 @@ public:
           ++it;
           continue;
         }
-
-#ifdef PICAS
-        if((client->threadAffinity != 0) && ((client->threadAffinity & (1 << thread_affinity_id)) == 0)) {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity unmatched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, client->callback_priority, client->threadAffinity);
+        if((client->thread_affinity != -1) && (client->thread_affinity != thread_affinity_id)) {
+          // The callback thread affinity is set but is different from thread id, so skip it for now
+          // Leave it to be checked next time, but continue searching           
+            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] Skipped: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, client->thread_affinity);
             ++it;
             continue;
-        } else {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, client->callback_priority, client->threadAffinity);
         }
+        // else {
+        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_client] Queued: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, client->thread_affinity);
+
+        // }
+
+#ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
           if (any_exec.client == nullptr || client->callback_priority > highest_priority) {
@@ -532,18 +541,17 @@ public:
           continue;
         }
 
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] Manual Debug timer thread affinity: %d", timer->threadAffinity);
-
-#ifdef PICAS
-        if((timer->threadAffinity != 0) && ((timer->threadAffinity & (1 << thread_affinity_id)) == 0)) {
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d", thread_affinity_id);
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity unmatched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, timer->callback_priority, timer->threadAffinity);
+        if((timer->thread_affinity != -1) && (timer->thread_affinity !=thread_affinity_id)) {
+          // The callback thread affinity is set but is different from thread id, so skip it for now
+          // Leave it to be checked next time, but continue searching          
+            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] Skipped: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, timer->thread_affinity);
             ++it;
             continue;
-        } else {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, timer->callback_priority, timer->threadAffinity);
         }
-        //
+        // else {
+        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_timer] Queued: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, timer->thread_affinity);
+        // }
+#ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
           if (any_exec.timer == nullptr || timer->callback_priority > highest_priority) {
@@ -600,7 +608,6 @@ public:
       auto waitable = *it;
       if (waitable) {
         // Find the group for this handle and see if it can be serviced
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug thread affinity = %d", waitable->threadAffinity);
         auto group = get_group_by_waitable(waitable, weak_groups_to_nodes);
         if (!group) {
           // Group was not found, meaning the waitable is not valid...
@@ -614,17 +621,18 @@ public:
           ++it;
           continue;
         }
-
-#ifdef PICAS
-          if((waitable->threadAffinity != 0) && ((waitable->threadAffinity & (1 << thread_affinity_id)) == 0)) {
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d", thread_affinity_id);
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity unmatched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, waitable->callback_priority, waitable->threadAffinity);
+        if((waitable->thread_affinity != -1) && (waitable->thread_affinity != thread_affinity_id)) {
+          // The callback thread affinity is set but is different from thread id, so skip it for now
+          // Leave it to be checked next time, but continue searching           
+            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Skipped: thread_id = %ld,  cb_thread_affinity : %d ", thread_affinity_id, waitable->thread_affinity);
             ++it;
             continue;
-        } else {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d for callback priority : %d, cb_thread_affinity : %d ", thread_affinity_id, waitable->callback_priority, waitable->threadAffinity);
         }
-        //
+        // else {
+        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Queued: thread_id = %ld, cb_thread_affinity : %d ", thread_affinity_id, waitable->thread_affinity);
+        // }
+        
+#ifdef PICAS
         // PiCAS: choose the highest-priority callback 
         if (callback_priority_enabled) {
           if (any_exec.waitable == nullptr || waitable->callback_priority > highest_priority) {
@@ -642,7 +650,6 @@ public:
           #ifdef PICAS_DEBUG
           RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] found (node name: %s)", any_exec.node_base->get_name());
           #endif
-          // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[get_next_waitable] Manual Debug: callback thread affinity matched for thread = %d", thread_affinity_id);
           return;
         }
 #else
