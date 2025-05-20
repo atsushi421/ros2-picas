@@ -19,9 +19,7 @@
 //#include "std_msgs/msg/string.hpp"
 #include "test_interfaces/msg/test_string.hpp"
 
-#ifdef CIE
 #include "static_callback_isolated_executor.hpp"
-#endif
 
 using std::placeholders::_1;
 
@@ -213,6 +211,7 @@ int main(int argc, char *argv[])
     rclcpp::init(argc, argv);
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PID: %ld run in ROS2.", gettid());
 
+    // Parse arguments
     std::string filepath = "data/case_study/mt4/S-Re/";
     if (argv[1] != NULL)
     {
@@ -224,6 +223,12 @@ int main(int argc, char *argv[])
     if (argv[2] != NULL)
     {
         number_of_cores = atoi(argv[2]);
+    }
+
+    std::string executor_name = "default_multi";
+    if (argv[3] != NULL)
+    {
+        executor_name = argv[3];
     }
 
     // Naive way to calibrate dummy workload for current system
@@ -267,127 +272,141 @@ int main(int argc, char *argv[])
     auto task11 = std::make_shared<IntermediateNode>("C4R2_3", "task10", "task11", trace_latency, filepath, 42, false);
     auto task12 = std::make_shared<IntermediateNode>("C4R3_4", "task11", "task12", trace_latency, filepath, 22, true);
 
-#ifndef CIE
-    // Create executors
-    rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), number_of_cores, true);
 
-#ifdef PICAS
-
-    // Enable priority-based callback scheduling
-    exec1.enable_callback_priority();
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS priority-based callback scheduling: %s", exec1.callback_priority_enabled ? "Enabled" : "Disabled");
-
-    // set executor's attributes
-    std::vector<int> assigned_cpus = {0, 1, 2, 3};
-    exec1.set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
-
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS executor 1's rt-priority %d and CPU:", exec1.rt_attr.sched_priority);
-    for (int x:exec1.cpus)     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "CPU %d", x);
-
-
-#endif // PICAS
-
-    // Allocate callbacks to executors (Reverse-priority order)
-
-    exec1.add_node(task9);
-    exec1.add_node(task10);
-    exec1.add_node(task11);
-    exec1.add_node(task12);
-
-    exec1.add_node(task6);
-    exec1.add_node(task7);
-    exec1.add_node(task8);
-
-    exec1.add_node(task1);
-    exec1.add_node(task3);
-    exec1.add_node(task4);
-    exec1.add_node(task5);
-
-    exec1.add_node(task2);
-
-#ifdef PICAS
-    // Assign callbacks' priority
-    exec1.set_callback_priority(task1->timer_, 8);
-    exec1.set_callback_priority(task2->subscription_, 12);
-
-    exec1.set_callback_priority(task3->subscription_, 9);
-    exec1.set_callback_priority(task4->subscription_, 10);
-    exec1.set_callback_priority(task5->subscription_, 11);
-
-    exec1.set_callback_priority(task6->timer_, 5);
-    exec1.set_callback_priority(task7->subscription_, 6);
-    exec1.set_callback_priority(task8->subscription_, 7);
-
-    exec1.set_callback_priority(task9->timer_, 1);
-    exec1.set_callback_priority(task10->subscription_, 2);
-    exec1.set_callback_priority(task11->subscription_, 3);
-    exec1.set_callback_priority(task12->subscription_, 4);
-
-#endif // PICAS
-
-    exec1.spin();
-
-    exec1.remove_node(task1);
-    exec1.remove_node(task2);
-    exec1.remove_node(task3);
-    exec1.remove_node(task4);
-    exec1.remove_node(task5);
-    exec1.remove_node(task6);
-    exec1.remove_node(task7);
-    exec1.remove_node(task8);
-    exec1.remove_node(task9);
-    exec1.remove_node(task10);
-    exec1.remove_node(task11);
-    exec1.remove_node(task12);
-#endif // CIE
-
-#ifdef CIE
-
-    std::vector<std::thread> threads;
-
-    auto exec1 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec1->add_node(task1);
-    auto exec2 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec2->add_node(task2);
-    auto exec3 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec3->add_node(task3);
-    auto exec4 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec4->add_node(task4);
-    auto exec5 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec5->add_node(task5);
-    auto exec6 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec6->add_node(task6);
-    auto exec7 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec7->add_node(task7);
-    auto exec8 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec8->add_node(task8);
-    auto exec9 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec9->add_node(task9);
-    auto exec10 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec10->add_node(task10);
-    auto exec11 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec11->add_node(task11);
-    auto exec12 = std::make_shared<StaticCallbackIsolatedExecutor>();
-    exec12->add_node(task12);
-
-    threads.push_back(std::thread([&]() { exec1->spin(); }));
-    threads.push_back(std::thread([&]() { exec2->spin(); }));
-    threads.push_back(std::thread([&]() { exec3->spin(); }));
-    threads.push_back(std::thread([&]() { exec4->spin(); }));
-    threads.push_back(std::thread([&]() { exec5->spin(); }));
-    threads.push_back(std::thread([&]() { exec6->spin(); }));
-    threads.push_back(std::thread([&]() { exec7->spin(); }));
-    threads.push_back(std::thread([&]() { exec8->spin(); }));
-    threads.push_back(std::thread([&]() { exec9->spin(); }));
-    threads.push_back(std::thread([&]() { exec10->spin(); }));
-    threads.push_back(std::thread([&]() { exec11->spin(); }));
-    threads.push_back(std::thread([&]() { exec12->spin(); }));
-    for (auto &thread : threads)
+    // Executor
+    if (executor_name == "default_multi")
     {
-        thread.join();
+        // Create executors
+        rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), number_of_cores, true);
+
+    #ifdef PICAS
+
+        // Enable priority-based callback scheduling
+        exec1.enable_callback_priority();
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS priority-based callback scheduling: %s", exec1.callback_priority_enabled ? "Enabled" : "Disabled");
+
+        // set executor's attributes
+        std::vector<int> assigned_cpus = {0, 1, 2, 3};
+        exec1.set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
+
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS executor 1's rt-priority %d and CPU:", exec1.rt_attr.sched_priority);
+        for (int x:exec1.cpus)     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "CPU %d", x);
+
+
+    #endif // PICAS
+
+        // Allocate callbacks to executors (Reverse-priority order)
+
+        exec1.add_node(task9);
+        exec1.add_node(task10);
+        exec1.add_node(task11);
+        exec1.add_node(task12);
+
+        exec1.add_node(task6);
+        exec1.add_node(task7);
+        exec1.add_node(task8);
+
+        exec1.add_node(task1);
+        exec1.add_node(task3);
+        exec1.add_node(task4);
+        exec1.add_node(task5);
+
+        exec1.add_node(task2);
+
+    #ifdef PICAS
+        // Assign callbacks' priority
+        exec1.set_callback_priority(task1->timer_, 8);
+        exec1.set_callback_priority(task2->subscription_, 12);
+
+        exec1.set_callback_priority(task3->subscription_, 9);
+        exec1.set_callback_priority(task4->subscription_, 10);
+        exec1.set_callback_priority(task5->subscription_, 11);
+
+        exec1.set_callback_priority(task6->timer_, 5);
+        exec1.set_callback_priority(task7->subscription_, 6);
+        exec1.set_callback_priority(task8->subscription_, 7);
+
+        exec1.set_callback_priority(task9->timer_, 1);
+        exec1.set_callback_priority(task10->subscription_, 2);
+        exec1.set_callback_priority(task11->subscription_, 3);
+        exec1.set_callback_priority(task12->subscription_, 4);
+
+    #endif // PICAS
+
+        exec1.spin();
+
+        exec1.remove_node(task1);
+        exec1.remove_node(task2);
+        exec1.remove_node(task3);
+        exec1.remove_node(task4);
+        exec1.remove_node(task5);
+        exec1.remove_node(task6);
+        exec1.remove_node(task7);
+        exec1.remove_node(task8);
+        exec1.remove_node(task9);
+        exec1.remove_node(task10);
+        exec1.remove_node(task11);
+        exec1.remove_node(task12);
     }
 
-#endif // CIE
+    else if (executor_name == "callback_isolated")
+    {
+        std::vector<std::thread> threads;
+
+        auto exec1 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec1->add_node(task1);
+        auto exec2 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec2->add_node(task2);
+        auto exec3 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec3->add_node(task3);
+        auto exec4 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec4->add_node(task4);
+        auto exec5 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec5->add_node(task5);
+        auto exec6 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec6->add_node(task6);
+        auto exec7 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec7->add_node(task7);
+        auto exec8 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec8->add_node(task8);
+        auto exec9 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec9->add_node(task9);
+        auto exec10 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec10->add_node(task10);
+        auto exec11 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec11->add_node(task11);
+        auto exec12 = std::make_shared<StaticCallbackIsolatedExecutor>();
+        exec12->add_node(task12);
+
+        threads.push_back(std::thread([&]() { exec1->spin(); }));
+        threads.push_back(std::thread([&]() { exec2->spin(); }));
+        threads.push_back(std::thread([&]() { exec3->spin(); }));
+        threads.push_back(std::thread([&]() { exec4->spin(); }));
+        threads.push_back(std::thread([&]() { exec5->spin(); }));
+        threads.push_back(std::thread([&]() { exec6->spin(); }));
+        threads.push_back(std::thread([&]() { exec7->spin(); }));
+        threads.push_back(std::thread([&]() { exec8->spin(); }));
+        threads.push_back(std::thread([&]() { exec9->spin(); }));
+        threads.push_back(std::thread([&]() { exec10->spin(); }));
+        threads.push_back(std::thread([&]() { exec11->spin(); }));
+        threads.push_back(std::thread([&]() { exec12->spin(); }));
+        for (auto &thread : threads)
+        {
+            thread.join();
+        }
+        exec1->remove_node(task1);
+        exec2->remove_node(task2);
+        exec3->remove_node(task3);
+        exec4->remove_node(task4);
+        exec5->remove_node(task5);
+        exec6->remove_node(task6);
+        exec7->remove_node(task7);
+        exec8->remove_node(task8);
+        exec9->remove_node(task9);
+        exec10->remove_node(task10);
+        exec11->remove_node(task11);
+        exec12->remove_node(task12);
+    }
 
     rclcpp::shutdown();
     return 0;
