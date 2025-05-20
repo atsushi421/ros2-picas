@@ -220,6 +220,12 @@ int main(int argc, char *argv[])
     }
     std::shared_ptr<trace::Trace> trace_latency = std::make_shared<trace::Trace>((filepath + "R.txt").c_str());
 
+    int number_of_cores = 4;
+    if (argv[2] != NULL)
+    {
+        number_of_cores = atoi(argv[2]);
+    }
+
     // Naive way to calibrate dummy workload for current system
     while (1)
     {
@@ -262,8 +268,7 @@ int main(int argc, char *argv[])
     auto task12 = std::make_shared<IntermediateNode>("C4R3_4", "task11", "task12", trace_latency, filepath, 22, true);
 
     // Create executors
-    int number_of_threads = 4;
-    rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), number_of_threads, true);
+    rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), number_of_cores, true);
 
 #ifdef PICAS
 
