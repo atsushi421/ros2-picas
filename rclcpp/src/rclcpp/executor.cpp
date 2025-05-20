@@ -38,6 +38,7 @@
 #ifdef PICAS
 #include <rclcpp/cb_sched.hpp>
 #include "rclcpp/memory_strategy.hpp"
+#include <cerrno>
 using rclcpp::memory_strategy::MemoryStrategy;
 #endif
 
@@ -86,6 +87,18 @@ Executor::Executor(const rclcpp::ExecutorOptions & options)
     rcl_reset_error();
     throw_from_rcl_error(ret, "Failed to create wait set in Executor constructor");
   }
+
+  #ifdef PICAS
+    cpus.clear();
+    rt_attr.size = sizeof(rt_attr);
+    rt_attr.sched_flags = 0;
+    rt_attr.sched_nice = 0;
+    rt_attr.sched_priority = 0;
+    rt_attr.sched_policy = 0;
+    rt_attr.sched_runtime = 0;
+    rt_attr.sched_period  = 0;
+    rt_attr.sched_deadline= 0;  
+  #endif  
 }
 
 Executor::~Executor()
@@ -137,6 +150,14 @@ Executor::~Executor()
     rcl_reset_error();
   }
 }
+
+#ifdef PICAS
+long int
+Executor::sched_setattr(pid_t pid, const struct sched_attr *attr, unsigned int flags)
+{
+  return syscall(__NR_sched_setattr, pid, attr, flags);
+}
+#endif
 
 std::vector<rclcpp::CallbackGroup::WeakPtr>
 Executor::get_all_callback_groups()

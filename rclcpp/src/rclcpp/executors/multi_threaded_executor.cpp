@@ -25,19 +25,6 @@
 
 using rclcpp::executors::MultiThreadedExecutor;
 
-#ifdef PICAS
-#include <cerrno>
-static long int sched_setattr(pid_t pid, const struct sched_attr *attr, unsigned int flags)
-{
-  return syscall(__NR_sched_setattr, pid, attr, flags);
-}
-
-//static long int sched_getattr(pid_t pid, struct sched_attr *attr, unsigned int size, unsigned int flags)
-//{
-//  return syscall(__NR_sched_getattr, pid, attr, size, flags);
-//}
-#endif
-
 MultiThreadedExecutor::MultiThreadedExecutor(
   const rclcpp::ExecutorOptions & options,
   size_t number_of_threads,
@@ -51,18 +38,6 @@ MultiThreadedExecutor::MultiThreadedExecutor(
   if (number_of_threads_ == 0) {
     number_of_threads_ = 1;
   }
-#ifdef PICAS
-  cpus.clear();
-
-  rt_attr.size = sizeof(rt_attr);
-  rt_attr.sched_flags = 0;
-  rt_attr.sched_nice = 0;
-  rt_attr.sched_priority = 0;
-  rt_attr.sched_policy = 0;
-  rt_attr.sched_runtime = 0;
-  rt_attr.sched_period  = 0;
-  rt_attr.sched_deadline= 0;  
-#endif
 }
 
 MultiThreadedExecutor::~MultiThreadedExecutor() {}
