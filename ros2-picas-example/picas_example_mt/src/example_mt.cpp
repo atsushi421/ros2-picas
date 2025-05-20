@@ -267,6 +267,7 @@ int main(int argc, char *argv[])
     auto task11 = std::make_shared<IntermediateNode>("C4R2_3", "task10", "task11", trace_latency, filepath, 42, false);
     auto task12 = std::make_shared<IntermediateNode>("C4R3_4", "task11", "task12", trace_latency, filepath, 22, true);
 
+#ifndef CIE
     // Create executors
     rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), number_of_cores, true);
 
@@ -284,7 +285,7 @@ int main(int argc, char *argv[])
     for (int x:exec1.cpus)     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "CPU %d", x);
 
 
-#endif
+#endif // PICAS
 
     // Allocate callbacks to executors (Reverse-priority order)
 
@@ -322,7 +323,7 @@ int main(int argc, char *argv[])
     exec1.set_callback_priority(task11->subscription_, 3);
     exec1.set_callback_priority(task12->subscription_, 4);
 
-#endif
+#endif // PICAS
 
     exec1.spin();
 
@@ -338,6 +339,55 @@ int main(int argc, char *argv[])
     exec1.remove_node(task10);
     exec1.remove_node(task11);
     exec1.remove_node(task12);
+#endif // CIE
+
+#ifdef CIE
+
+    std::vector<std::thread> threads;
+
+    auto exec1 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec1->add_node(task1);
+    auto exec2 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec2->add_node(task2);
+    auto exec3 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec3->add_node(task3);
+    auto exec4 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec4->add_node(task4);
+    auto exec5 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec5->add_node(task5);
+    auto exec6 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec6->add_node(task6);
+    auto exec7 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec7->add_node(task7);
+    auto exec8 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec8->add_node(task8);
+    auto exec9 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec9->add_node(task9);
+    auto exec10 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec10->add_node(task10);
+    auto exec11 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec11->add_node(task11);
+    auto exec12 = std::make_shared<StaticCallbackIsolatedExecutor>();
+    exec12->add_node(task12);
+
+    threads.push_back(std::thread([&]() { exec1->spin(); }));
+    threads.push_back(std::thread([&]() { exec2->spin(); }));
+    threads.push_back(std::thread([&]() { exec3->spin(); }));
+    threads.push_back(std::thread([&]() { exec4->spin(); }));
+    threads.push_back(std::thread([&]() { exec5->spin(); }));
+    threads.push_back(std::thread([&]() { exec6->spin(); }));
+    threads.push_back(std::thread([&]() { exec7->spin(); }));
+    threads.push_back(std::thread([&]() { exec8->spin(); }));
+    threads.push_back(std::thread([&]() { exec9->spin(); }));
+    threads.push_back(std::thread([&]() { exec10->spin(); }));
+    threads.push_back(std::thread([&]() { exec11->spin(); }));
+    threads.push_back(std::thread([&]() { exec12->spin(); }));
+    for (auto &thread : threads)
+    {
+        thread.join();
+    }
+
+#endif // CIE
 
     rclcpp::shutdown();
     return 0;
