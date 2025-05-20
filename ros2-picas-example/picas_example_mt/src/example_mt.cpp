@@ -19,6 +19,10 @@
 //#include "std_msgs/msg/string.hpp"
 #include "test_interfaces/msg/test_string.hpp"
 
+#ifdef CIE
+#include "static_callback_isolated_executor.hpp"
+#endif
+
 using std::placeholders::_1;
 
 #define gettid() syscall(__NR_gettid)

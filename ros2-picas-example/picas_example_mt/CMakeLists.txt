@@ -13,15 +13,24 @@ endif()
 if(${PICAS})
   add_compile_options(-DPICAS)
 endif()
+if(${CIE})
+  add_compile_options(-DCIE)
+endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(test_interfaces REQUIRED)
 find_package(trace_picas REQUIRED)
+if(${CIE})
+  find_package(rclcpp_component_container_callback_isolated REQUIRED)
+endif()
 
 add_executable(example_mt src/example_mt.cpp)
 ament_target_dependencies(example_mt rclcpp test_interfaces trace_picas)
+if(${CIE})
+  ament_target_dependencies(example_mt rclcpp_component_container_callback_isolated)
+endif()
 
 install(TARGETS
   example_mt
