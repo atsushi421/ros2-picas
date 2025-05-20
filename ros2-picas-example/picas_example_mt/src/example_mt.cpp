@@ -349,6 +349,90 @@ int main(int argc, char *argv[])
         exec1.remove_node(task12);
     }
 
+    else if (executor_name == "default_single")
+    {
+        auto exec1 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec2 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec3 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec4 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+
+    #ifndef PICAS
+        auto exec5 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec6 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec7 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec8 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec9 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec10 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec11 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        auto exec12 = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+
+        exec1->add_node(task1);
+        exec2->add_node(task2);
+        exec3->add_node(task3);
+        exec4->add_node(task4);
+        exec5->add_node(task5);
+        exec6->add_node(task6);
+        exec7->add_node(task7);
+        exec8->add_node(task8);
+        exec9->add_node(task9);
+        exec10->add_node(task10);
+        exec11->add_node(task11);
+        exec12->add_node(task12);
+    #endif // PICAS
+
+    #ifdef PICAS
+        exec1->enable_callback_priority();
+        exec2->enable_callback_priority();
+        exec3->enable_callback_priority();
+        exec4->enable_callback_priority();
+
+        exec1->set_executor_priority_cpu(SCHED_FIFO, 90, 1);
+        exec2->set_executor_priority_cpu(SCHED_FIFO, 89, 2);
+        exec3->set_executor_priority_cpu(SCHED_FIFO, 88, 3);
+        exec4->set_executor_priority_cpu(SCHED_FIFO, 87, 4);
+
+        exec1->add_node(task2); exec1->add_node(task1);
+        exec2->add_node(task5); exec2->add_node(task4); exec2->add_node(task3);
+        exec3->add_node(task8); exec3->add_node(task7); exec3->add_node(task6);
+        exec4->add_node(task12); exec4->add_node(task11); exec4->add_node(task10); exec4->add_node(task9);
+    
+        exec1->set_callback_priority(task2->subscription_, 12);
+        exec1->set_callback_priority(task1->timer_, 11);
+        exec2->set_callback_priority(task5->subscription_, 10);
+        exec2->set_callback_priority(task4->subscription_, 9);
+        exec2->set_callback_priority(task3->subscription_, 8);
+        exec3->set_callback_priority(task8->subscription_, 7);
+        exec3->set_callback_priority(task7->subscription_, 6);
+        exec3->set_callback_priority(task6->timer_, 5);
+        exec4->set_callback_priority(task12->subscription_, 4);
+        exec4->set_callback_priority(task11->subscription_, 3);
+        exec4->set_callback_priority(task10->subscription_, 2);
+        exec4->set_callback_priority(task9->timer_, 1);
+    #endif // PICAS
+
+        std::vector<std::thread> threads;
+        threads.push_back(std::thread([&]() { exec1->spin(); }));
+        threads.push_back(std::thread([&]() { exec2->spin(); }));
+        threads.push_back(std::thread([&]() { exec3->spin(); }));
+        threads.push_back(std::thread([&]() { exec4->spin(); }));
+    
+    #ifndef PICAS
+        threads.push_back(std::thread([&]() { exec5->spin(); }));
+        threads.push_back(std::thread([&]() { exec6->spin(); }));
+        threads.push_back(std::thread([&]() { exec7->spin(); }));
+        threads.push_back(std::thread([&]() { exec8->spin(); }));
+        threads.push_back(std::thread([&]() { exec9->spin(); }));
+        threads.push_back(std::thread([&]() { exec10->spin(); }));
+        threads.push_back(std::thread([&]() { exec11->spin(); }));
+        threads.push_back(std::thread([&]() { exec12->spin(); }));
+    #endif // PICAS
+        
+        for (auto &thread : threads)
+        {
+            thread.join();
+        }
+    }
+
     else if (executor_name == "callback_isolated")
     {
         std::vector<std::thread> threads;
@@ -394,18 +478,6 @@ int main(int argc, char *argv[])
         {
             thread.join();
         }
-        exec1->remove_node(task1);
-        exec2->remove_node(task2);
-        exec3->remove_node(task3);
-        exec4->remove_node(task4);
-        exec5->remove_node(task5);
-        exec6->remove_node(task6);
-        exec7->remove_node(task7);
-        exec8->remove_node(task8);
-        exec9->remove_node(task9);
-        exec10->remove_node(task10);
-        exec11->remove_node(task11);
-        exec12->remove_node(task12);
     }
 
     rclcpp::shutdown();
