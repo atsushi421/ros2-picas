@@ -1,0 +1,113 @@
+callback_groups:
+
+# Chain 1 (Highest Priority)
+  - id: /C1R1_12@Subscription(/parameter_events)@Subscription(/task1)@Service(/C1R1_12/get_parameters)@Service(/C1R1_12/get_parameter_types)@Service(/C1R1_12/set_parameters)@Service(/C1R1_12/set_parameters_atomically)@Service(/C1R1_12/describe_parameters)@Service(/C1R1_12/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 95
+
+  - id: /C1T_8@Subscription(/parameter_events)@Service(/C1T_8/get_parameters)@Service(/C1T_8/get_parameter_types)@Service(/C1T_8/set_parameters)@Service(/C1T_8/set_parameters_atomically)@Service(/C1T_8/describe_parameters)@Service(/C1T_8/list_parameters)@Timer(50000000)@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 95
+
+# Chain 2
+  - id: /C2R1_9@Subscription(/parameter_events)@Subscription(/task1)@Service(/C2R1_9/get_parameters)@Service(/C2R1_9/get_parameter_types)@Service(/C2R1_9/set_parameters)@Service(/C2R1_9/set_parameters_atomically)@Service(/C2R1_9/describe_parameters)@Service(/C2R1_9/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 94
+
+  - id: /C2R2_10@Subscription(/parameter_events)@Subscription(/task3)@Service(/C2R2_10/get_parameters)@Service(/C2R2_10/get_parameter_types)@Service(/C2R2_10/set_parameters)@Service(/C2R2_10/set_parameters_atomically)@Service(/C2R2_10/describe_parameters)@Service(/C2R2_10/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 94
+
+  - id: /C2R3_11@Subscription(/parameter_events)@Subscription(/task4)@Service(/C2R3_11/get_parameters)@Service(/C2R3_11/get_parameter_types)@Service(/C2R3_11/set_parameters)@Service(/C2R3_11/set_parameters_atomically)@Service(/C2R3_11/describe_parameters)@Service(/C2R3_11/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 94
+
+# Chain 3
+  - id: /C3R1_6@Subscription(/parameter_events)@Subscription(/task6)@Service(/C3R1_6/get_parameters)@Service(/C3R1_6/get_parameter_types)@Service(/C3R1_6/set_parameters)@Service(/C3R1_6/set_parameters_atomically)@Service(/C3R1_6/describe_parameters)@Service(/C3R1_6/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 93
+
+  - id: /C3R2_7@Subscription(/parameter_events)@Subscription(/task7)@Service(/C3R2_7/get_parameters)@Service(/C3R2_7/get_parameter_types)@Service(/C3R2_7/set_parameters)@Service(/C3R2_7/set_parameters_atomically)@Service(/C3R2_7/describe_parameters)@Service(/C3R2_7/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 93
+
+  - id: /C3T_5@Subscription(/parameter_events)@Service(/C3T_5/get_parameters)@Service(/C3T_5/get_parameter_types)@Service(/C3T_5/set_parameters)@Service(/C3T_5/set_parameters_atomically)@Service(/C3T_5/describe_parameters)@Service(/C3T_5/list_parameters)@Timer(100000000)@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 93
+
+# Chain 4
+  - id: /C4R1_2@Subscription(/parameter_events)@Subscription(/task9)@Service(/C4R1_2/get_parameters)@Service(/C4R1_2/get_parameter_types)@Service(/C4R1_2/set_parameters)@Service(/C4R1_2/set_parameters_atomically)@Service(/C4R1_2/describe_parameters)@Service(/C4R1_2/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 92
+
+  - id: /C4R2_3@Subscription(/parameter_events)@Subscription(/task10)@Service(/C4R2_3/get_parameters)@Service(/C4R2_3/get_parameter_types)@Service(/C4R2_3/set_parameters)@Service(/C4R2_3/set_parameters_atomically)@Service(/C4R2_3/describe_parameters)@Service(/C4R2_3/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 92
+
+  - id: /C4R3_4@Subscription(/parameter_events)@Subscription(/task11)@Service(/C4R3_4/get_parameters)@Service(/C4R3_4/get_parameter_types)@Service(/C4R3_4/set_parameters)@Service(/C4R3_4/set_parameters_atomically)@Service(/C4R3_4/describe_parameters)@Service(/C4R3_4/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 92
+
+  - id: /C4T_1@Subscription(/parameter_events)@Service(/C4T_1/get_parameters)@Service(/C4T_1/get_parameter_types)@Service(/C4T_1/set_parameters)@Service(/C4T_1/set_parameters_atomically)@Service(/C4T_1/describe_parameters)@Service(/C4T_1/list_parameters)@Timer(200000000)@Waitable@Waitable@Waitable@Waitable
+    affinity:
+      - 0
+      - 1
+      - 2
+      - 3
+    policy: SCHED_FIFO
+    priority: 92
