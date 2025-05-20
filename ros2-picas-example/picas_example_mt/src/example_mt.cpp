@@ -1,3 +1,5 @@
+// Case Study in "Timing Analysis and Priority-driven Enhancements  of ROS 2 Multi-threaded Executors"
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -207,6 +209,13 @@ int main(int argc, char *argv[])
     rclcpp::init(argc, argv);
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PID: %ld run in ROS2.", gettid());
 
+    std::string filepath = "data/case_study/mt4/S-Re/";
+    if (argv[1] != NULL)
+    {
+        filepath = argv[1];
+    }
+    std::shared_ptr<trace::Trace> trace_latency = std::make_shared<trace::Trace>((filepath + "R.txt").c_str());
+
     // Naive way to calibrate dummy workload for current system
     while (1)
     {
@@ -229,8 +238,6 @@ int main(int argc, char *argv[])
     timeval ctime;
     gettimeofday(&ctime, NULL);
 
-    std::string filepath = "data/case_study/mt4/S-Re/";
-    std::shared_ptr<trace::Trace> trace_latency = std::make_shared<trace::Trace>("data/case_study/mt4/S-Re/R.txt");
 
     // Create callbacks
     auto task9 = std::make_shared<StartNode>("C4T_1", "task9", trace_latency, filepath, 21, 200, false);
