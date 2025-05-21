@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
         num_load_tasks = std::stoi(argv[4]);
     }
 
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Executor: %s, Separate chain multi-threaded executor: %s", executor_name.c_str(), separate_chain_multi ? "true" : "false");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Executor: %s, Separate chain multi-threaded executor: %s, Number of load tasks: %d", executor_name.c_str(), separate_chain_multi ? "true" : "false", num_load_tasks);
 
     // Naive way to calibrate dummy workload for current system
     while (1)

@@ -89,7 +89,7 @@ for METHOD in "${METHODS[@]}"; do
             RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_picas_mt${NUM_CORES}_${NUM_LOAD_TASK}/"
             remove_create_dir "$RESULT_DIR"
             source install/setup.bash
-            sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- $RESULT_DIR default_multi $NUM_LOAD_TASK 1>/dev/null 2>&1 &"
+            sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- $RESULT_DIR default_multi 0 $NUM_LOAD_TASK & 1>/dev/null 2>&1 &"
             set_affinity_balance
 
         elif [ "$METHOD" == "picas_multi_separate" ]; then
@@ -104,7 +104,7 @@ for METHOD in "${METHODS[@]}"; do
             colcon build --allow-overriding rclcpp --cmake-args -DPICAS=TRUE
             RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_picas_st${NUM_CORES}_${NUM_LOAD_TASK}/"
             remove_create_dir "$RESULT_DIR"
-            sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- $RESULT_DIR default_single $NUM_LOAD_TASK 1>/dev/null 2>&1 &"
+            sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- $RESULT_DIR default_single 0 $NUM_LOAD_TASK 1>/dev/null 2>&1 &"
             set_affinity_balance
 
         elif [ "$METHOD" == "default_multi" ]; then
@@ -112,7 +112,7 @@ for METHOD in "${METHODS[@]}"; do
             RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_default_mt${NUM_CORES}_${NUM_LOAD_TASK}/"
             remove_create_dir "$RESULT_DIR"
             source install/setup.bash
-            ros2 run picas_example_mt example_mt -- $RESULT_DIR "default_multi" $NUM_LOAD_TASK 1>/dev/null 2>&1 &
+            ros2 run picas_example_mt example_mt -- $RESULT_DIR "default_multi" 0 $NUM_LOAD_TASK 1>/dev/null 2>&1 &
             set_affinity_balance
 
         elif [ "$METHOD" == "default_multi_separate" ]; then
@@ -128,7 +128,7 @@ for METHOD in "${METHODS[@]}"; do
             RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_default_st${NUM_CORES}_${NUM_LOAD_TASK}/"
             remove_create_dir "$RESULT_DIR"
             source install/setup.bash
-            ros2 run picas_example_mt example_mt -- $RESULT_DIR "default_single" $NUM_LOAD_TASK 1>/dev/null 2>&1 &
+            ros2 run picas_example_mt example_mt -- $RESULT_DIR "default_single" 0 $NUM_LOAD_TASK 1>/dev/null 2>&1 &
             set_affinity_balance
 
         elif [ "$METHOD" == "cie" ]; then
@@ -136,7 +136,7 @@ for METHOD in "${METHODS[@]}"; do
             RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_cie_${NUM_CORES}_${NUM_LOAD_TASK}/"
             remove_create_dir "$RESULT_DIR"
             # sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run ros2_thread_configurator thread_configurator_node --config-file /home/atsushi/ros2-picas/config_for_case_study.yaml"
-            # sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- /home/atsushi/ros2-picas/results/case_study_cie_4/ callback_isolated"
+            # sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- /home/atsushi/ros2-picas/results/case_study_cie_4/ callback_isolated 0 $NUM_LOAD_TASK 1>/dev/null 2>&1 &"
         fi
 
         sleep 3
