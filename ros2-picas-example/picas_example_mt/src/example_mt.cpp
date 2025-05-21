@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
             exec2->enable_callback_priority();
 
             // set executor's attributes
-            std::vector<int> assigned_cpus = {1, 2, 3, 4};
+            std::vector<int> assigned_cpus = {17, 18, 19, 20};
             exec1->set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
             exec2->set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
         #endif // PICAS
@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS priority-based callback scheduling: %s", exec1.callback_priority_enabled ? "Enabled" : "Disabled");
 
             // set executor's attributes
-            std::vector<int> assigned_cpus = {1, 2, 3, 4};
+            std::vector<int> assigned_cpus = {17, 18, 19, 20};
             exec1.set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
 
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS executor 1's rt-priority %d and CPU:", exec1.rt_attr.sched_priority);
@@ -425,10 +425,10 @@ int main(int argc, char *argv[])
         exec3->enable_callback_priority();
         exec4->enable_callback_priority();
 
-        exec1->set_executor_priority_cpu(SCHED_FIFO, 90, 1);
-        exec2->set_executor_priority_cpu(SCHED_FIFO, 89, 2);
-        exec3->set_executor_priority_cpu(SCHED_FIFO, 88, 3);
-        exec4->set_executor_priority_cpu(SCHED_FIFO, 87, 4);
+        exec1->set_executor_priority_cpu(SCHED_FIFO, 90, 17);
+        exec2->set_executor_priority_cpu(SCHED_FIFO, 89, 18);
+        exec3->set_executor_priority_cpu(SCHED_FIFO, 88, 19);
+        exec4->set_executor_priority_cpu(SCHED_FIFO, 87, 20);
 
         exec1->add_node(task2); exec1->add_node(task1);
         exec2->add_node(task5); exec2->add_node(task4); exec2->add_node(task3);
