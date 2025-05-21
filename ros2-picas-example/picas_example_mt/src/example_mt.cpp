@@ -219,17 +219,20 @@ int main(int argc, char *argv[])
     }
     std::shared_ptr<trace::Trace> trace_latency = std::make_shared<trace::Trace>((filepath + "R.txt").c_str());
 
-    int number_of_cores = 4;
+    
+    std::string executor_name = "default_multi";
     if (argv[2] != NULL)
     {
-        number_of_cores = atoi(argv[2]);
+        executor_name = argv[2];
     }
 
-    std::string executor_name = "default_multi";
+    bool separate_chain_multi = false;
     if (argv[3] != NULL)
     {
-        executor_name = argv[3];
+        separate_chain_multi = std::stoi(argv[3]);
     }
+
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Executor: %s, Separate chain multi-threaded executor: %s", executor_name.c_str(), separate_chain_multi ? "true" : "false");
 
     // Naive way to calibrate dummy workload for current system
     while (1)
@@ -276,77 +279,113 @@ int main(int argc, char *argv[])
     // Executor
     if (executor_name == "default_multi")
     {
-        // Create executors
-        rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), number_of_cores, true);
+        if (separate_chain_multi)
+        {
+            auto exec1 = std::make_shared<rclcpp::executors::MultiThreadedExecutor>(rclcpp::ExecutorOptions(), 2, true);
+            auto exec2 = std::make_shared<rclcpp::executors::MultiThreadedExecutor>(rclcpp::ExecutorOptions(), 2, true);
 
-    #ifdef PICAS
+        #ifdef PICAS
+            // Enable priority-based callback scheduling
+            exec1->enable_callback_priority();
+            exec2->enable_callback_priority();
 
-        // Enable priority-based callback scheduling
-        exec1.enable_callback_priority();
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS priority-based callback scheduling: %s", exec1.callback_priority_enabled ? "Enabled" : "Disabled");
+            // set executor's attributes
+            std::vector<int> assigned_cpus = {1, 2, 3, 4};
+            exec1->set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
+            exec2->set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
+        #endif // PICAS
 
-        // set executor's attributes
-        std::vector<int> assigned_cpus = {0, 1, 2, 3};
-        exec1.set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
+            exec1->add_node(task1); exec1->add_node(task3); exec1->add_node(task6); exec1->add_node(task7); exec1->add_node(task9); exec1->add_node(task10);
+            exec2->add_node(task2); exec2->add_node(task4); exec2->add_node(task5); exec2->add_node(task8); exec2->add_node(task11); exec2->add_node(task12);
+        
+        #ifdef PICAS
+            // Assign callbacks' priority
+            exec1->set_callback_priority(task1->timer_, 8);
+            exec1->set_callback_priority(task3->subscription_, 9);
+            exec1->set_callback_priority(task6->timer_, 5);
+            exec1->set_callback_priority(task7->subscription_, 6);
+            exec1->set_callback_priority(task9->timer_, 1);
+            exec1->set_callback_priority(task10->subscription_, 2);
 
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS executor 1's rt-priority %d and CPU:", exec1.rt_attr.sched_priority);
-        for (int x:exec1.cpus)     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "CPU %d", x);
+            exec2->set_callback_priority(task2->subscription_, 12);
+            exec2->set_callback_priority(task4->subscription_, 10);
+            exec2->set_callback_priority(task5->subscription_, 11);
+            exec2->set_callback_priority(task8->subscription_, 7);
+            exec2->set_callback_priority(task11->subscription_, 3);
+            exec2->set_callback_priority(task12->subscription_, 4);
+        #endif // PICAS
+
+            std::vector<std::thread> threads;
+            threads.push_back(std::thread([&]() { exec1->spin(); }));
+            threads.push_back(std::thread([&]() { exec2->spin(); }));
+
+            for (auto &thread : threads)
+            {
+                thread.join();
+            }
+        }
+
+        else
+        {
+            // Create executors
+            rclcpp::executors::MultiThreadedExecutor exec1(rclcpp::ExecutorOptions(), 4, true);
+
+        #ifdef PICAS
+
+            // Enable priority-based callback scheduling
+            exec1.enable_callback_priority();
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS priority-based callback scheduling: %s", exec1.callback_priority_enabled ? "Enabled" : "Disabled");
+
+            // set executor's attributes
+            std::vector<int> assigned_cpus = {1, 2, 3, 4};
+            exec1.set_executor_priority_cpu(SCHED_FIFO, 90, assigned_cpus);
+
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "PiCAS executor 1's rt-priority %d and CPU:", exec1.rt_attr.sched_priority);
+            for (int x:exec1.cpus)     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "CPU %d", x);
 
 
-    #endif // PICAS
+        #endif // PICAS
 
-        // Allocate callbacks to executors (Reverse-priority order)
+            // Allocate callbacks to executors (Reverse-priority order)
 
-        exec1.add_node(task9);
-        exec1.add_node(task10);
-        exec1.add_node(task11);
-        exec1.add_node(task12);
+            exec1.add_node(task9);
+            exec1.add_node(task10);
+            exec1.add_node(task11);
+            exec1.add_node(task12);
 
-        exec1.add_node(task6);
-        exec1.add_node(task7);
-        exec1.add_node(task8);
+            exec1.add_node(task6);
+            exec1.add_node(task7);
+            exec1.add_node(task8);
 
-        exec1.add_node(task1);
-        exec1.add_node(task3);
-        exec1.add_node(task4);
-        exec1.add_node(task5);
+            exec1.add_node(task1);
+            exec1.add_node(task3);
+            exec1.add_node(task4);
+            exec1.add_node(task5);
 
-        exec1.add_node(task2);
+            exec1.add_node(task2);
 
-    #ifdef PICAS
-        // Assign callbacks' priority
-        exec1.set_callback_priority(task1->timer_, 8);
-        exec1.set_callback_priority(task2->subscription_, 12);
+        #ifdef PICAS
+            // Assign callbacks' priority
+            exec1.set_callback_priority(task1->timer_, 8);
+            exec1.set_callback_priority(task2->subscription_, 12);
 
-        exec1.set_callback_priority(task3->subscription_, 9);
-        exec1.set_callback_priority(task4->subscription_, 10);
-        exec1.set_callback_priority(task5->subscription_, 11);
+            exec1.set_callback_priority(task3->subscription_, 9);
+            exec1.set_callback_priority(task4->subscription_, 10);
+            exec1.set_callback_priority(task5->subscription_, 11);
 
-        exec1.set_callback_priority(task6->timer_, 5);
-        exec1.set_callback_priority(task7->subscription_, 6);
-        exec1.set_callback_priority(task8->subscription_, 7);
+            exec1.set_callback_priority(task6->timer_, 5);
+            exec1.set_callback_priority(task7->subscription_, 6);
+            exec1.set_callback_priority(task8->subscription_, 7);
 
-        exec1.set_callback_priority(task9->timer_, 1);
-        exec1.set_callback_priority(task10->subscription_, 2);
-        exec1.set_callback_priority(task11->subscription_, 3);
-        exec1.set_callback_priority(task12->subscription_, 4);
+            exec1.set_callback_priority(task9->timer_, 1);
+            exec1.set_callback_priority(task10->subscription_, 2);
+            exec1.set_callback_priority(task11->subscription_, 3);
+            exec1.set_callback_priority(task12->subscription_, 4);
 
-    #endif // PICAS
+        #endif // PICAS
 
-        exec1.spin();
-
-        exec1.remove_node(task1);
-        exec1.remove_node(task2);
-        exec1.remove_node(task3);
-        exec1.remove_node(task4);
-        exec1.remove_node(task5);
-        exec1.remove_node(task6);
-        exec1.remove_node(task7);
-        exec1.remove_node(task8);
-        exec1.remove_node(task9);
-        exec1.remove_node(task10);
-        exec1.remove_node(task11);
-        exec1.remove_node(task12);
+            exec1.spin();
+        }
     }
 
     else if (executor_name == "default_single")
