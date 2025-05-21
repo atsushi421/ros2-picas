@@ -7,7 +7,7 @@ METHODS=(
     "default_single"
 )
 NUM_CORES=4
-DURATION_S=270
+DURATION_S=300
 
 function remove_create_dir() {
     DIR=$1
@@ -20,12 +20,21 @@ function remove_create_dir() {
 TARGET_PROC=""
 
 function set_affinity_balance() {
-    sleep 30
+    sleep 3
     TARGET_PROC=$(pgrep -f install/picas_example_mt)
     if [[ -z "$TARGET_PROC" ]]; then
         echo "Target process not found."
         return 1
     fi
+
+    # Wait until there are at least three threads with 'example_mt' in the command
+    while true; do
+        mt_count=$(ps -L -p "$TARGET_PROC" -o comm= --no-headers | grep -c "example_mt")
+        if ((mt_count >= 4)); then
+            break
+        fi
+        sleep 1
+    done
 
     # Store CPU usage per thread (LWP)
     ps -L -p $TARGET_PROC -o lwp=,%cpu=,comm= --no-headers |
@@ -78,6 +87,8 @@ for METHOD in "${METHODS[@]}"; do
         RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_picas_st${NUM_CORES}/"
         remove_create_dir "$RESULT_DIR"
         sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- $RESULT_DIR default_single 1>/dev/null 2>&1 &"
+        # ros2 run picas_example_mt example_mt -- $RESULT_DIR default_single 1>/dev/null 2>&1 &
+        # set_affinity_balance
 
     elif [ "$METHOD" == "default_multi" ]; then
         colcon build --allow-overriding rclcpp --cmake-args -DPICAS=FALSE
