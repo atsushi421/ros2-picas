@@ -232,6 +232,12 @@ int main(int argc, char *argv[])
         separate_chain_multi = std::stoi(argv[3]);
     }
 
+    int num_load_tasks = 0;
+    if (argv[4] != NULL)
+    {
+        num_load_tasks = std::stoi(argv[4]);
+    }
+
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Executor: %s, Separate chain multi-threaded executor: %s", executor_name.c_str(), separate_chain_multi ? "true" : "false");
 
     // Naive way to calibrate dummy workload for current system
@@ -275,6 +281,14 @@ int main(int argc, char *argv[])
     auto task11 = std::make_shared<IntermediateNode>("C4R2_3", "task10", "task11", trace_latency, filepath, 42, false);
     auto task12 = std::make_shared<IntermediateNode>("C4R3_4", "task11", "task12", trace_latency, filepath, 22, true);
 
+    // Create load tasks
+    auto load_tasks = std::vector<std::shared_ptr<StartNode>>();
+    for (int i = 0; i < num_load_tasks; i++)
+    {
+        // Utilization: 20% of CPU
+        load_tasks.push_back(std::make_shared<StartNode>("load" + std::to_string(i), "dummy" + std::to_string(i), trace_latency, filepath, 20, 100, false));
+    }
+
 
     // Executor
     if (executor_name == "default_multi")
@@ -314,6 +328,18 @@ int main(int argc, char *argv[])
             exec2->set_callback_priority(task11->subscription_, 3);
             exec2->set_callback_priority(task12->subscription_, 4);
         #endif // PICAS
+
+            for (int i = 0; i < load_tasks.size(); i++)
+            {
+                if (i % 2 == 0)
+                {
+                    exec1->add_node(load_tasks[i]);
+                }
+                else
+                {
+                    exec2->add_node(load_tasks[i]);
+                }
+            }
 
             std::vector<std::thread> threads;
             threads.push_back(std::thread([&]() { exec1->spin(); }));
@@ -383,6 +409,11 @@ int main(int argc, char *argv[])
             exec1.set_callback_priority(task12->subscription_, 4);
 
         #endif // PICAS
+
+            for (auto &load_task : load_tasks)
+            {
+                exec1.add_node(load_task);
+            }
 
             exec1.spin();
         }
@@ -465,6 +496,77 @@ int main(int argc, char *argv[])
         threads.push_back(std::thread([&]() { exec11->spin(); }));
         threads.push_back(std::thread([&]() { exec12->spin(); }));
     #endif // PICAS
+
+        for (size_t i = 0; i < load_tasks.size(); i++)
+        {
+            #ifdef PICAS
+                if (i % 4 == 0)
+                {
+                    exec1->add_node(load_tasks[i]);
+                }
+                else if (i % 4 == 1)
+                {
+                    exec2->add_node(load_tasks[i]);
+                }
+                else if (i % 4 == 2)
+                {
+                    exec3->add_node(load_tasks[i]);
+                }
+                else
+                {
+                    exec4->add_node(load_tasks[i]);
+                }
+            #else
+                if (i % 12 == 0)
+                {
+                    exec1->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 1)
+                {
+                    exec2->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 2)
+                {
+                    exec3->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 3)
+                {
+                    exec4->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 4)
+                {
+                    exec5->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 5)
+                {
+                    exec6->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 6)
+                {
+                    exec7->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 7)
+                {
+                    exec8->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 8)
+                {
+                    exec9->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 9)
+                {
+                    exec10->add_node(load_tasks[i]);
+                }
+                else if (i % 12 == 10)
+                {
+                    exec11->add_node(load_tasks[i]);
+                }
+                else
+                {
+                    exec12->add_node(load_tasks[i]);
+                }
+            #endif // PICAS
+        }
         
         for (auto &thread : threads)
         {
@@ -500,6 +602,58 @@ int main(int argc, char *argv[])
         exec11->add_node(task11);
         auto exec12 = std::make_shared<StaticCallbackIsolatedExecutor>();
         exec12->add_node(task12);
+
+        for (int i = 0; i < load_tasks.size(); i++)
+        {
+            if (i % 12 == 0)
+            {
+                exec1->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 1)
+            {
+                exec2->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 2)
+            {
+                exec3->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 3)
+            {
+                exec4->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 4)
+            {
+                exec5->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 5)
+            {
+                exec6->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 6)
+            {
+                exec7->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 7)
+            {
+                exec8->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 8)
+            {
+                exec9->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 9)
+            {
+                exec10->add_node(load_tasks[i]);
+            }
+            else if (i % 12 == 10)
+            {
+                exec11->add_node(load_tasks[i]);
+            }
+            else
+            {
+                exec12->add_node(load_tasks[i]);
+            }
+        }
 
         threads.push_back(std::thread([&]() { exec1->spin(); }));
         threads.push_back(std::thread([&]() { exec2->spin(); }));
