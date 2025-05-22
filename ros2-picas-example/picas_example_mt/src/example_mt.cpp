@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
         separate_chain_multi = std::stoi(argv[3]);
     }
 
-    int num_load_tasks = 0;
+    size_t num_load_tasks = 0;
     if (argv[4] != NULL)
     {
         num_load_tasks = std::stoi(argv[4]);
@@ -250,8 +250,8 @@ int main(int argc, char *argv[])
         gettimeofday(&ftime, NULL);
         duration_us = (ftime.tv_sec - ctime.tv_sec) * 1000000 + (ftime.tv_usec - ctime.tv_usec);
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "dummy_load_calib: %d (duration_us: %d ns)", dummy_load_calib, duration_us);
-        if (abs(duration_us - 100 * 1000) < 500)
-        { // error margin: 500us
+        if (abs(duration_us - 100 * 1000) < 1000)
+        { // error margin: 1000us (1ms)
             break;
         }
         dummy_load_calib = 100 * 1000 * dummy_load_calib / duration_us;
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 
     // Create load tasks
     auto load_tasks = std::vector<std::shared_ptr<StartNode>>();
-    for (int i = 0; i < num_load_tasks; i++)
+    for (size_t i = 0; i < num_load_tasks; i++)
     {
         // Utilization: 20% of CPU
         load_tasks.push_back(std::make_shared<StartNode>("load" + std::to_string(i), "dummy" + std::to_string(i), trace_latency, filepath, 20, 100, false));
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
             exec2->set_callback_priority(task12->subscription_, 4);
         #endif // PICAS
 
-            for (int i = 0; i < load_tasks.size(); i++)
+            for (size_t i = 0; i < load_tasks.size(); i++)
             {
                 if (i % 2 == 0)
                 {
@@ -497,76 +497,21 @@ int main(int argc, char *argv[])
         threads.push_back(std::thread([&]() { exec12->spin(); }));
     #endif // PICAS
 
+        // Add load tasks for PICAS.
+        #ifdef PICAS
+        auto additional_executors = std::vector<std::shared_ptr<rclcpp::executors::SingleThreadedExecutor>>();
         for (size_t i = 0; i < load_tasks.size(); i++)
         {
-            #ifdef PICAS
-                if (i % 4 == 0)
-                {
-                    exec1->add_node(load_tasks[i]);
-                }
-                else if (i % 4 == 1)
-                {
-                    exec2->add_node(load_tasks[i]);
-                }
-                else if (i % 4 == 2)
-                {
-                    exec3->add_node(load_tasks[i]);
-                }
-                else
-                {
-                    exec4->add_node(load_tasks[i]);
-                }
-            #else
-                if (i % 12 == 0)
-                {
-                    exec1->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 1)
-                {
-                    exec2->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 2)
-                {
-                    exec3->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 3)
-                {
-                    exec4->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 4)
-                {
-                    exec5->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 5)
-                {
-                    exec6->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 6)
-                {
-                    exec7->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 7)
-                {
-                    exec8->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 8)
-                {
-                    exec9->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 9)
-                {
-                    exec10->add_node(load_tasks[i]);
-                }
-                else if (i % 12 == 10)
-                {
-                    exec11->add_node(load_tasks[i]);
-                }
-                else
-                {
-                    exec12->add_node(load_tasks[i]);
-                }
-            #endif // PICAS
+            auto exec = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+            exec->add_node(load_tasks[i]);
+            additional_executors.push_back(exec);
         }
+        // Spin the additional executors in separate threads
+        for (auto &exec : additional_executors)
+        {
+            threads.push_back(std::thread([&]() { exec->spin(); }));
+        }
+        #endif // PICAS
         
         for (auto &thread : threads)
         {
@@ -603,56 +548,17 @@ int main(int argc, char *argv[])
         auto exec12 = std::make_shared<StaticCallbackIsolatedExecutor>();
         exec12->add_node(task12);
 
-        for (int i = 0; i < load_tasks.size(); i++)
+        auto additional_executors = std::vector<std::shared_ptr<StaticCallbackIsolatedExecutor>>();
+        for (size_t i = 0; i < load_tasks.size(); i++)
         {
-            if (i % 12 == 0)
-            {
-                exec1->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 1)
-            {
-                exec2->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 2)
-            {
-                exec3->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 3)
-            {
-                exec4->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 4)
-            {
-                exec5->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 5)
-            {
-                exec6->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 6)
-            {
-                exec7->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 7)
-            {
-                exec8->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 8)
-            {
-                exec9->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 9)
-            {
-                exec10->add_node(load_tasks[i]);
-            }
-            else if (i % 12 == 10)
-            {
-                exec11->add_node(load_tasks[i]);
-            }
-            else
-            {
-                exec12->add_node(load_tasks[i]);
-            }
+            auto exec = std::make_shared<StaticCallbackIsolatedExecutor>();
+            exec->add_node(load_tasks[i]);
+            additional_executors.push_back(exec);
+        }
+        // Spin the additional executors in separate threads
+        for (auto &exec : additional_executors)
+        {
+            threads.push_back(std::thread([&]() { exec->spin(); }));
         }
 
         threads.push_back(std::thread([&]() { exec1->spin(); }));

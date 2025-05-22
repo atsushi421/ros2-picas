@@ -1,11 +1,12 @@
 METHODS=(
-    "picas_multi"
-    "picas_multi_separate"
+    # "picas_multi"
+    # "picas_multi_separate"
     "picas_single"
-    "default_multi"
-    "default_multi_separate"
-    "default_single"
+    # "default_multi"
+    # "default_multi_separate"
+    # "cie"
 )
+# "default_single" は不要と判断
 NUM_LOAD_TASKS=(0 2 4 6 8 10 12 14 16 18 20)
 NUM_CORES=4
 DURATION_S=60
@@ -29,11 +30,12 @@ function set_affinity_balance() {
         fi
         sleep 1
     done
+    echo "TARGET_PROC: $TARGET_PROC"
 
-    # Wait until there are at least four 'example_mt' threads with CPU usage >= 10%
+    # Wait until there are at least four 'example_mt' threads with CPU usage >= 1%
     while true; do
         mt_count=$(ps -L -p "$TARGET_PROC" -o comm=,pcpu= --no-headers |
-            awk '$1 ~ /example_mt/ && $2 >= 10.0 { count++ } END { print count+0 }')
+            awk '$1 ~ /example_mt/ && $2 >= 1.0 { count++ } END { print count+0 }')
         if ((mt_count >= 4)); then
             break
         fi
@@ -46,6 +48,7 @@ function set_affinity_balance() {
         sort -k2 -nr >/tmp/tid_cpu_usage.tmp
 
     i=0
+    direction=1 # 1: 増加, -1: 減少
     CORES=(17 18 19 20)
     while read -r tid cpu cmd; do
         if [[ $cmd == *"example_mt"* ]]; then
@@ -54,14 +57,22 @@ function set_affinity_balance() {
                 affinity=${CORES[$((i % ${#CORES[@]}))]}
                 sudo taskset -p -c $affinity $tid >/dev/null
                 echo "Set TID $tid (CPU usage: $cpu%) to CPU $affinity"
-                ((i++))
+
+                # 増減の切り替えロジック for Worst-Fit
+                if ((i == ${#CORES[@]} - 1)); then
+                    direction=-1 # 最大に達したら減少に切り替え
+                elif ((i == 0)); then
+                    direction=1 # 最小に達したら増加に切り替え
+                fi
+
+                ((i += direction))
             else
                 # Global in CORES
                 sudo taskset -p -c 17-20 $tid >/dev/null
                 echo "Set TID $tid (CPU usage: $cpu%) to CPU 17-20"
                 if [[ $METHOD == "default"* ]]; then
                     # Set SCHED_FIFO 90 for fair evaluation
-                    sudo chrt -f 90 -p $tid >/dev/null
+                    sudo chrt -p -f 90 $tid >/dev/null
                     echo "Set TID $tid (CPU usage: $cpu%) to SCHED_FIFO 90"
                 fi
             fi
@@ -136,7 +147,8 @@ for METHOD in "${METHODS[@]}"; do
             RESULT_DIR="/home/atsushi/ros2-picas/results/case_study_cie_${NUM_CORES}_${NUM_LOAD_TASK}/"
             remove_create_dir "$RESULT_DIR"
             # sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run ros2_thread_configurator thread_configurator_node --config-file /home/atsushi/ros2-picas/config_for_case_study.yaml"
-            # sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- /home/atsushi/ros2-picas/results/case_study_cie_4/ callback_isolated 0 $NUM_LOAD_TASK 1>/dev/null 2>&1 &"
+            sudo bash -c "source /opt/ros/humble/setup.bash; source /home/atsushi/ros2-picas/install/setup.bash; ros2 run picas_example_mt example_mt -- $RESULT_DIR callback_isolated 0 $NUM_LOAD_TASK 1>/dev/null 2>&1 &"
+            set_affinity_balance
         fi
 
         sleep 3
