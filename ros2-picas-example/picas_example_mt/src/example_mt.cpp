@@ -113,7 +113,7 @@ private:
         last_rtime = ctime;
 
         std::string name = this->get_name();
-        RCLCPP_INFO(this->get_logger(), ("callback: " + name).c_str());
+        // RCLCPP_INFO(this->get_logger(), ("callback: " + name).c_str());
 
         dummy_load(exe_time_);
 
@@ -132,9 +132,9 @@ private:
         publisher_->publish(message);
 
         gettimeofday(&t2, NULL);
-        AET.tv_sec = t2.tv_sec - t1.tv_sec;
-        AET.tv_usec = t2.tv_usec - t1.tv_usec;
-        trace_exectime_->trace_write(name + "_exec_time ", std::to_string(AET.tv_sec * 1000000 + AET.tv_usec)); // microsecond
+        // AET.tv_sec = t2.tv_sec - t1.tv_sec;
+        // AET.tv_usec = t2.tv_usec - t1.tv_usec;
+        // trace_exectime_->trace_write(name + "_exec_time ", std::to_string(AET.tv_sec * 1000000 + AET.tv_usec)); // microsecond
     }
 };
 
@@ -180,7 +180,7 @@ private:
         count_ = new_count;
 
         std::string name = this->get_name();
-        RCLCPP_INFO(this->get_logger(), ("callback: " + name).c_str());
+        // RCLCPP_INFO(this->get_logger(), ("callback: " + name).c_str());
 
         dummy_load(exe_time_);
 
@@ -200,9 +200,9 @@ private:
             publisher_->publish(message);
 
         gettimeofday(&t2, NULL);
-        AET.tv_sec = t2.tv_sec - t1.tv_sec;
-        AET.tv_usec = t2.tv_usec - t1.tv_usec;
-        trace_exectime_->trace_write(name + "_exec_time ", std::to_string(AET.tv_sec * 1000000 + AET.tv_usec));
+        // AET.tv_sec = t2.tv_sec - t1.tv_sec;
+        // AET.tv_usec = t2.tv_usec - t1.tv_usec;
+        // trace_exectime_->trace_write(name + "_exec_time ", std::to_string(AET.tv_sec * 1000000 + AET.tv_usec));
     }
 };
 
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
         dummy_load(100); // 100ms
         gettimeofday(&ftime, NULL);
         duration_us = (ftime.tv_sec - ctime.tv_sec) * 1000000 + (ftime.tv_usec - ctime.tv_usec);
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "dummy_load_calib: %d (duration_us: %d ns)", dummy_load_calib, duration_us);
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "dummy_load_calib: %d (duration_us: %d ns)", dummy_load_calib, duration_us);
         if (abs(duration_us - 100 * 1000) < 1000)
         { // error margin: 1000us (1ms)
             break;

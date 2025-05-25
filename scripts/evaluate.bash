@@ -155,7 +155,7 @@ for METHOD in "${METHODS[@]}"; do
         TARGET_PROC=$(pgrep -f install/picas_example_mt)
         echo "TARGET_PROC: $TARGET_PROC"
         # taskset -c 5 watch -n 1 ps -p <pid> -o pid,comm,rss,vsz
-        sudo perf-custom-6.8 stat -e context-switches -p $TARGET_PROC -o "$RESULT_DIR/perf_stat.txt" &
+        # sudo perf-custom-6.8 stat -e context-switches -p $TARGET_PROC -o "$RESULT_DIR/perf_stat.txt" &
         sleep $DURATION_S
         sudo kill $TARGET_PROC
     done

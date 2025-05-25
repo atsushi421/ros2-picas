@@ -41,4 +41,5 @@
 build/
 install/
 log/
-results/
+results*/
+figure/
